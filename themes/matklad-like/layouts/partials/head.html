@@ -3,6 +3,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <title>superchig</title>
+
+  {{ range .AlternativeOutputFormats -}}
+      {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .RelPermalink $.Site.Title | safeHTML }}
+  {{ end -}}
   <meta name="description" content="A programming blog full of unintentional errors." />
   <!-- <link rel="canonical" href="https://matklad.github.io//"> -->
   <!-- <link rel="alternate" type="application/rss+xml" title="matklad" href="https://matklad.github.io//feed.xml"> -->

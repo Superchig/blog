@@ -3,6 +3,9 @@ languageCode = 'en-us'
 title = "superchig"
 theme = 'matklad-like'
 
+[author]
+  name = 'Christopher Chang'
+
 # Modify to show about (no resume)
 [menu]
   # [[menu.main]]
@@ -23,6 +26,8 @@ theme = 'matklad-like'
 
 [params]
   dateFormat = "Jan 2, 2006"
+  githubLink = 'https://github.com/Superchig'
+  githubUsername = 'Superchig'
 
 # [permalinks]
 #   posts = "/:title" 
