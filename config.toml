@@ -1,4 +1,4 @@
-baseURL = 'http://superchig.github.io/blog'
+baseURL = 'https://superchig.com'
 languageCode = 'en-us'
 title = "superchig"
 theme = 'matklad-like'
