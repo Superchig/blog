@@ -1,0 +1,10 @@
+<header class="site-header">
+    <nav>
+	<a class="-title" href="/">{{ .Site.Title }}</a>
+	<!-- <a href="/about/">About</a> -->
+	<!-- <a href="/resume/">Resume</a> -->
+	{{ range .Site.Menus.main }}
+	<a href="{{ .URL }}">{{ .Name | safeHTML }}</a>
+	{{ end }}
+    </nav>
+</header>

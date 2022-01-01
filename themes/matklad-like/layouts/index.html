@@ -1,0 +1,12 @@
+{{ define "main" }}
+<ul class="post-list">
+{{ range ( where .Site.RegularPages "Type" "posts" ) }}
+    <li>
+	<span class="post-meta">{{ .PublishDate.Format .Site.Params.dateFormat }}</span>
+	<h2>
+	    <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+	</h2>
+    </li>
+{{ end }}
+</ul>
+{{ end }}
