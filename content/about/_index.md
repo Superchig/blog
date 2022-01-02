@@ -1,7 +1,7 @@
 <!--
 
 ---
-title: "Rust: waiting for std::backtrace to be stabilized"
+title: "About"
 date: 2021-12-31T20:45:20-08:00
 draft: false
 tags: ["Rust", "programming"]
