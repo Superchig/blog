@@ -9,4 +9,4 @@ the visual style of [matklad's blog](https://matklad.github.io/).
 - [ ] Clean up the visual presentation of the /posts/ link
 - [ ] Correctly display dates in the /tags/ link
 - [ ] Avoid double-displaying tagged posts when using the /tags/ link
-
+- [x] Use different html titles for different pages
