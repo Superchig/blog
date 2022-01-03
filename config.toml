@@ -2,6 +2,7 @@ baseURL = 'https://superchig.com'
 languageCode = 'en-us'
 title = "superchig"
 theme = 'matklad-like'
+enableRobotsTXT = true
 
 [author]
   name = 'Christopher Chang'
