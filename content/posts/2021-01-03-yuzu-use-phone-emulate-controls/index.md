@@ -83,10 +83,10 @@ The button's text should change to say something like "Shake!".
 ![](shake.png)
 
 While the button's text says "Shake!", you should then shake your phone. If
-everything works correctly, the button should now read "emuhookudp" or
+everything works correctly, the button should now read "cemuhookudp" or
 something similar.
 
-![](emuhook.png)
+![](cemuhook.png)
 
 At this point, you should be ready to use your phone for motion controls.
 
