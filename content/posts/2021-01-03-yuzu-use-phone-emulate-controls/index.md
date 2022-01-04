@@ -3,7 +3,7 @@
 ---
 title: "Yuzu: Using a phone to emulate motion controls"
 date: 2022-01-03T18:24:20-08:00
-draft: true
+draft: false
 tags: ["emulation"]
 ---
 
