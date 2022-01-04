@@ -8,10 +8,12 @@ p, ol, ul, dl, hr, table, .listingblock, .imageblock, .sidebarblock {
 }
 
 img, object, svg, video {
-    display: inline-block;
+    display: block;
     vertical-align: middle;
     max-width: 100%;
     height: auto;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 html {
@@ -83,6 +85,10 @@ hr {
     border: solid #dddddf;
     border-width: 1px 0 0;
     height: 0;
+}
+
+pre {
+    margin-bottom: 0.5em;
 }
 
 code,
