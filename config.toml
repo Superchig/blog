@@ -19,11 +19,17 @@ enableRobotsTXT = true
     # pre = "pen-tool"
     url = "/about/"
     weight = 2
+  # [[menu.main]]
+  #   name = "Tags"
+  #   pre = "tag"
+  #   url = "/tags/"
+  #   weight = 3
   [[menu.main]]
-    name = "Tags"
-    pre = "tag"
-    url = "/tags/"
+    name = "Portfolio"
+    # pre = "pen-tool"
+    url = "/portfolio/"
     weight = 3
+
 
 [params]
   dateFormat = "Jan 2, 2006"
