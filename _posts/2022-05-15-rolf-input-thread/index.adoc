@@ -1,6 +1,6 @@
 = Rolf: User Input, Threads, and Channels
 
-:fn-large: footnote:[Rolf doesn't necessarily load insanely large images, but there can be a noticeable loading time. We might want to use a https://lib.rs/crates/mozjpeg[faster JPEG decoder].]
+:fn-large: footnote:[Rolf doesn't necessarily load insanely large images, but there can be a noticeable loading time. Going forward, we might want to use a https://lib.rs/crates/mozjpeg[faster JPEG decoder].]
 
 Assume that you’re writing a TUI application (like
 https://github.com/Superchig/rolf[`rolf`]) which does at least two
@@ -22,18 +22,60 @@ it’s possible to be both asynchronous and single-threaded.
 However, for the purposes of `rolf`, we used multiple threads to handle
 asynchronous input.
 
+== Architecture
+
+For the purposes of this post, let's say that there are 3 threads
+involvedfootnote:[`rolf` actually uses more threads than the ones shown here,
+but they're not relevant to this post.].
+
+image:/assets/2022-05-15-rolf-input-thread/threads.png[]
+
+As seen in the diagram above, have a thread for:
+
+- Receiving user input,
+- Decoding images
+- And everything else (the Main thread)
+
+You might also notice that the Input and Image Decoding threads only interact
+with the Main thread, sending data back and forth to each other.
+
+The Input and Main threads will both run on "infinite" loops. The Input thread
+will wait for user input, sending it to the Main thread as necessary, and the
+Main thread will wait for either input data from the Input thread or decoded
+image data from the Image Decoding thread, processing this data as necessary.
+
+Notably, we achieve all of this without polling, instead using channels to send
+between threads.
+
 == Starting The Input Thread
 
 We can start operating system threads with
 https://doc.rust-lang.org/std/thread/fn.spawn.html[`std::thread::spawn`],
 conveniently provided by the Rust standard library.
 
+Specifically, we'll start a thread whose sole purpose is to block on and
+receive input data.
+
 [source,rust]
 ----
-pub fn spawn<F, T>(f: F) -> JoinHandle<T> where
-    F: FnOnce() -> T,
-    F: Send + 'static,
-    T: Send + 'static, 
+std::thread::spawn(move || {
+    loop {
+        let input_request_count = match from_main_rx.recv() {
+            Ok(InputRequest::RequestNumber(input_request_count)) => input_request_count,
+            Ok(InputRequest::Quit) => break,
+            Err(err) => panic!("Input thread: Lost connnection to main thread: {:?}", err),
+        };
+
+        let crossterm_event = event::read().expect("Unable to read crossterm event");
+
+        crossterm_input_tx
+            .send(InputEvent::CrosstermEvent {
+                event: crossterm_event,
+                input_request_count,
+            })
+            .expect("Unable to send on channel");
+    }
+});
 ----
 
 *Note*: Have I made any typos? Am I blatantly wrong about something? Do
