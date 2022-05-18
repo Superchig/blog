@@ -30,11 +30,14 @@ enableRobotsTXT = true
     url = "/portfolio/"
     weight = 3
 
-
 [params]
   dateFormat = "Jan 2, 2006"
   githubLink = 'https://github.com/Superchig'
   githubUsername = 'Superchig'
+
+[markup.highlight]
+  codefences = true
+  noClasses = false
 
 # [permalinks]
 #   posts = "/:title" 
