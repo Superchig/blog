@@ -33,7 +33,7 @@ image:/assets/2022-05-15-rolf-input-thread/threads.png[]
 As seen in the diagram above, we have a thread for:
 
 - Receiving user input,
-- Decoding images
+- Decoding images,
 - And everything else (the Main thread)
 
 You might also notice that the Input and Image Decoding threads only interact
@@ -45,19 +45,80 @@ Main thread will wait for either input data from the Input thread or decoded
 image data from the Image Decoding thread, processing this data as necessary.
 
 Notably, we achieve all of this without polling, instead using channels to send
-between threads.
+data between threads.
 
-== Starting The Input Thread
+Our Main thread will simply be the initial thread of the program, and our two
+other threads will be started by the Main thread.
 
-We can start operating system threads with
-https://doc.rust-lang.org/std/thread/fn.spawn.html[`std::thread::spawn`],
-conveniently provided by the Rust standard library.
+== Channels
 
-Specifically, we'll start a thread whose sole purpose is to block on and
-receive input data.
+Before starting the loops for either of the threads (in fact, before starting
+any additional threads beyond the Main one), we're going to create a few
+channels.
 
 [source,rust]
 ----
+let (tx, rx) = channel();
+
+let (to_input_tx, from_main_rx) = sync_channel(0);
+----
+
+Here, we've created two channels:
+
+- One which we'll use for sending data to the Main thread,
+- And another which we'll use for sending data to the Input thread.
+
+Since channels only send information in one direction, we need two channels if
+we want bidirectional communication between the Input thread and the Main
+thread. Why do we want bidirectional communication in the first place? Well
+discuss that more later.
+
+From our point of view, each channel consists of a sender and a receiver.
+
+- For the first channel, `tx` will be our sender and `rx` will be our receiver.
+- For the second channel, `to_input_tx` is our sender and `from_main_rx` is our
+  receiver.
+
+Notably, we use a different function to create each of our channels. I'm not
+sure if this is actually necessary, but this allows us to create
+asynchronous/infinitely buffered vs. synchronous/bounded channels. The
+distinction won't matter massively for the purposes of this blog post, but you
+can read more about it https://doc.rust-lang.org/std/sync/mpsc/[here].
+
+== Data Between Channels
+
+Before we actually use the channels to send data between threads, let's first
+establish the types of data that will be sent.
+
+[source,rust]
+----
+enum InputEvent {
+    CrosstermEvent {
+        event: crossterm::event::Event,
+        input_request_count: usize,
+    },
+    // Other events...
+}
+----
+
+[source,rust]
+----
+enum InputRequest {
+    RequestNumber(usize),
+    Quit,
+}
+----
+
+== Starting The Input Thread
+
+Now that we've created some channels, it's time to start the input loop.
+
+Specifically, we'll start the input loop in its own thread, the Input thread.
+
+[source,rust]
+----
+let crossterm_input_tx = tx.clone();
+
 std::thread::spawn(move || {
     loop {
         let input_request_count = match from_main_rx.recv() {
