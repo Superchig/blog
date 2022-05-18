@@ -9,5 +9,5 @@ Chapman University. You can find me on
 https://github.com/Superchig[Github]. If you want to contact me, you can
 write an email to chiggiechang@gmail.com.
 
-This blog's theme and Jekyll setup are courtesy of the
+This blog's theme and Jekyll setup are courtesy of the brilliant
 https://matklad.github.io/[matklad].
