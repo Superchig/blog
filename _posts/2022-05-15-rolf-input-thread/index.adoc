@@ -30,7 +30,7 @@ but they're not relevant to this post.].
 
 image:/assets/2022-05-15-rolf-input-thread/threads.png[]
 
-As seen in the diagram above, have a thread for:
+As seen in the diagram above, we have a thread for:
 
 - Receiving user input,
 - Decoding images
