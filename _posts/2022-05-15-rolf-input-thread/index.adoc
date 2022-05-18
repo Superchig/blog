@@ -50,6 +50,10 @@ data between threads.
 Our Main thread will simply be the initial thread of the program, and our two
 other threads will be started by the Main thread.
 
+In this post, we'll be looking at the relationship between the _Input thread_
+and _Main thread_. The Image Decoding thread is sophisticated enough to warrant
+a post of its own, which I may write in the future.
+
 == Channels
 
 Before starting the loops for either of the threads (in fact, before starting
@@ -70,7 +74,7 @@ Here, we've created two channels:
 
 Since channels only send information in one direction, we need two channels if
 we want bidirectional communication between the Input thread and the Main
-thread. Why do we want bidirectional communication in the first place? Well
+thread. Why do we want bidirectional communication in the first place? We'll
 discuss that more later.
 
 From our point of view, each channel consists of a sender and a receiver.
@@ -109,9 +113,56 @@ enum InputRequest {
 }
 ----
 
-== Starting The Input Thread
+The first enum we defined will be sent from the Input thread to the Main thread.
 
-Now that we've created some channels, it's time to start the input loop.
+The second enum is sent from the Main thread to the Input thread. This implies
+that the Main thread must request input from the Input thread before the Input
+thread actually sends any input. This is the primary reason we have
+bidirectional communication between the Main and Input threads, and it allows us
+to avoid a potentially annoying bug.
+
+=== Bug: Too Many Inputs
+
+In `rolf`, there's a feature which allows the user to open up their current file
+in an external text editor of their choice (using the `EDITOR` and `VISUAL`
+environmental variables). Typical values of `EDITOR` might be `nano`, `vim`, or
+`emacsclient`. For this feature, the Main thread will block until the external
+text editor is closedfootnote:[Specifically, the Main thread will block until
+the child process spawned by it to open up the external editor is closed.].
+
+Now imagine if we didn't have the Main thread request input from the Input
+thread, instead making the Input thread send input through its
+infinitely-buffered channel as soon as it receive any from the user.
+
+If we combine this channel setup with the external editor feature described
+above, we'll run into a curious problem: the Input thread may "steal"
+keypresses from the external editor.
+
+Since the Input thread will just receive input and send it to the Main thread
+whenever it receives a keypress, it can occasionally continue receiving these
+inputs even if, say, `vim` is being used to edit the current file. As a result,
+two annoying things will happen:
+
+1. These occasional inputs won't make it to `vim`, resulting in the user being
+   unsettled by the inconsistent (in)ability to provide input.
+2. These occasional inputs will be sent to the main thread, which will then
+   process those inputs after the external editor is closed. This would also be
+   disjarring for the user, as they would see apparent "phantom inputs" be
+   rapidly processed after they finish editing.
+
+By making the Main Thread send requests for input to the Input thread, we can
+ensure that the Input thread only sends input to the Main thread when necessary.
+This prevents the above bug from happening entirely.
+
+You might've also noticed that both `InputRequest` and `CrosstermEvent` contain
+request numbers. These request numbers help the Main thread determine whether or
+not it should actually send a request for input, which is crucial for properly
+fixing this bug. We'll dive more into that later.
+
+== Starting the Input Thread
+
+Now that we have the channels and their data set up, it's time to start the
+input loop.
 
 Specifically, we'll start the input loop in its own thread, the Input thread.
 
@@ -137,6 +188,55 @@ std::thread::spawn(move || {
             .expect("Unable to send on channel");
     }
 });
+----
+
+Here, to satisfy the Rust borrow checker, we need to clone our sender before we
+use it in the actual thread. Since these channels are multi-producer,
+single-consumer, this is how we handle having more than one possible sender
+(producer) to the Main thread.
+
+The rest of the thread is mostly what you'd expect, with a bit of bookkeeping
+for request numbers and requests to quit the thread.
+
+Notably, the Input thread keeps track of the request number of the most recent
+input request sent to it by the Main thread, and then it sends this number back
+to the Main thread alongside the actual input data.
+
+This implies the Main thread will be the only thread to modify request numbers
+at all. We'll see more about this in a bit.
+
+== Loop in the Main Thread
+
+As the name might indicate, the Main thread is where the real meat and bones of
+`rolf` takes place.
+
+[source,rust]
+----
+loop {
+    // Main drawing code...
+    
+    // Other stuff...
+
+    // eprintln!("Main thread: Obtaining event...");
+    let event = match rx.try_recv() {
+        Ok(event) => event,
+        Err(TryRecvError::Empty) => {
+            if input_request_count == last_recv_req_count {
+                input_request_count += 1;
+                to_input_tx
+                    .send(InputRequest::RequestNumber(input_request_count))
+                    .expect("Unable to send to input thread");
+            }
+
+            rx.recv().unwrap()
+        }
+        Err(err) => panic!("Unable to obtain input event: {}", err),
+    };
+
+    match event {
+        // Handle actual events...
+    }
+}
 ----
 
 *Note*: Have I made any typos? Am I blatantly wrong about something? Do
