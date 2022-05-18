@@ -1,0 +1,43 @@
+= Rolf: User Input, Threads, and Channels
+
+:fn-large: footnote:[Rolf doesn't necessarily load insanely large images, but there can be a noticeable loading time. We might want to use a https://lib.rs/crates/mozjpeg[faster JPEG decoder].]
+
+Assume that you’re writing a TUI application (like
+https://github.com/Superchig/rolf[`rolf`]) which does at least two
+things:
+
+1. Respond to user input, and
+2. Load in incredibly large{fn-large} images.
+
+If you’re working on a program like this, you might run into an annoying
+problem: users have to wait for images to load before they can do
+anything.
+
+The solution to this problem is to asynchronously obtain user input.
+
+Depending on your runtime (e.g.
+https://thecodest.co/blog/asynchronous-and-single-threaded-javascript-meet-the-event-loop/[nodejs]),
+it’s possible to be both asynchronous and single-threaded.
+
+However, for the purposes of `rolf`, we used multiple threads to handle
+asynchronous input.
+
+== Starting The Input Thread
+
+We can start operating system threads with
+https://doc.rust-lang.org/std/thread/fn.spawn.html[`std::thread::spawn`],
+conveniently provided by the Rust standard library.
+
+[source,rust]
+----
+pub fn spawn<F, T>(f: F) -> JoinHandle<T> where
+    F: FnOnce() -> T,
+    F: Send + 'static,
+    T: Send + 'static, 
+----
+
+*Note*: Have I made any typos? Am I blatantly wrong about something? Do
+you just have general feedback? I’m still a Rust novice (arguably a
+programming novice, in general), so feel free to email me at
+mailto:chiggiechang@gmail.com[`chiggiechang@gmail.com`]. But be polite,
+please!

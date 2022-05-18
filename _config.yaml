@@ -1,0 +1,23 @@
+title: superchig
+description: >
+  A programming blog by Christopher Chang, based off of matklad's excellent blog.
+baseurl: ""
+url: "https://superchig.com"
+github_username: Superchig
+
+author: Christopher Chang
+
+plugins:
+- jekyll-asciidoc
+- jekyll-redirect-from
+- jekyll-feed
+
+asciidoctor:
+  attributes:
+    - icons=font
+    - source-highlighter=rouge
+    - source-linenums-option=_
+    - sectanchors=_
+    - experimental=_
+    - rouge-style=github
+    - stylesdir=css

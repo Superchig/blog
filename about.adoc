@@ -1,0 +1,13 @@
+= About
+:layout: default
+:page-permalink: /about/
+
+== Hello!
+
+I’m Christopher Chang, an undergraduate Software Engineering student at
+Chapman University. You can find me on
+https://github.com/Superchig[Github]. If you want to contact me, you can
+write an email to chiggiechang@gmail.com.
+
+This blog's theme and Jekyll setup are courtesy of the
+https://matklad.github.io/[matklad].
