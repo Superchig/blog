@@ -208,16 +208,21 @@ at all. We'll see more about this in a bit.
 == Loop in the Main Thread
 
 As the name might indicate, the Main thread is where the real meat and bones of
-`rolf` takes place.
+`rolf` takes place. Since they can get fairly complex, we'll omit most of those
+details, only showing the parts that are relevant to managing concurrency.
 
 [source,rust]
 ----
+let mut input_request_count = 0;
+let mut last_recv_req_count = 0;
+
+// Other initialization code...
+
 loop {
     // Main drawing code...
-    
+
     // Other stuff...
 
-    // eprintln!("Main thread: Obtaining event...");
     let event = match rx.try_recv() {
         Ok(event) => event,
         Err(TryRecvError::Empty) => {
@@ -234,10 +239,86 @@ loop {
     };
 
     match event {
-        // Handle actual events...
+        InputEvent::CrosstermEvent {
+            event,
+            input_request_count,
+        } => {
+            last_recv_req_count = input_request_count;
+
+            // Process input from user...
+        }
+        // Handle other events...
     }
 }
 ----
+
+As mentioned earlier, the Main thread handles updates request numbers and
+determines if it should send an input request.
+
+When determining if we should send an input request, there are two key things to
+keep in mind:
+
+. We should only ask for a keypress if there's no other input or data to process.
+. We should only ask for a keypress if the Input thread has already responded to
+  our last input request.
+
+In practice, the first item means only asking for a keypress if there are no
+existing `InputEvent` values in the channel to the main thread. This is
+precisely what lines `11`-`24` of the above code block are achieving.
+
+To handle the second item, we need to keep track of two key things:
+
+- The request number of the most recently sent input request
+  (`input_request_count`).
+- And the request number associated with the last `CrosstermEvent` received by
+  the Main thread from the Input thread (`last_recv_req_count`).
+
+By comparing request numbers for equality, we can see which `CrosstermEvent`
+values were prompted by which input requests. Thus, to see if the Input thread
+has already responded to our last input request, we can check if the
+`input_request_count` number is equal to the `last_recv_req_count` number.
+
+=== Possible Bug: Integer Overflow
+
+You might've noticed that we're just incrementing `input_request_count` every
+time we make a new input request.
+
+If we continue doing that for long enough, the value of `input_request_count`
+will surpass the maximum value of a 64-bit unsigned integer, resulting in
+integer overflow.
+
+There's a simple fix to this problem: wrapping the integer.
+
+. Before incrementing, check if `input_request_count` is at the maximum value
+  for its type.
+. If it is, then set `input_request_count` back to 0.
+. Otherwise, increment it as normal.
+
+
+In practice, I haven't run into this bug yet (due to the incredibly high number
+of `CrosstermEvent` values which would have to be sent to trigger it).
+
+In
+https://huonw.github.io/blog/2016/04/myths-and-legends-about-integer-overflow-in-rust/[release
+builds] with Rust, integers will wrap around using two's complement, so this
+bug won't really be visible. If I understand this correctly, two's complement
+wraparound will in effect achieve the wrapping algorithm I described above.
+
+In debug builds, overflow will be checked at runtime, with the program panicking
+if overflow does occur. I probably won't ever use `rolf` enough to trigger this
+bug in a debug build (or in any build, really).
+
+Fortunately, if this does turn out to be an issue, the fix should be fairly
+simple.
+
+== Parting Thoughts
+
+It took me a crazy long time to figure out how to address the input "stealing"
+bug. Arguably, finding that bug (in addition to the asynchronous image loading
+problem) was one of the leading factors which led me to reshape the architecture
+of `rolf` into what it is now.
+
+If you ever run into a similar problem, I hope this is useful to you!
 
 *Note*: Have I made any typos? Am I blatantly wrong about something? Do
 you just have general feedback? I’m still a Rust novice (arguably a
