@@ -25,8 +25,8 @@ asynchronous input.
 == Architecture
 
 For the purposes of this post, let's say that there are 3 threads
-involvedfootnote:[`rolf` actually uses more threads than the ones shown here,
-but they're not relevant to this post.].
+involved.footnote:[`rolf` actually uses more threads than the ones shown here,
+but they're not relevant to this post.]
 
 image:/assets/2022-05-15-rolf-input-thread/threads.png[]
 
@@ -127,8 +127,8 @@ In `rolf`, there's a feature which allows the user to open up their current file
 in an external text editor of their choice (using the `EDITOR` and `VISUAL`
 environmental variables). Typical values of `EDITOR` might be `nano`, `vim`, or
 `emacsclient`. For this feature, the Main thread will block until the external
-text editor is closedfootnote:[Specifically, the Main thread will block until
-the child process spawned by it to open up the external editor is closed.].
+text editor is closed.footnote:[Specifically, the Main thread will block until
+the child process spawned by it to open up the external editor is closed.]
 
 Now imagine if we didn't have the Main thread request input from the Input
 thread, instead making the Input thread send input through its
