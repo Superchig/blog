@@ -1,0 +1,96 @@
+= Custom GUIDs in Unity
+:toc:
+
+// Interestingly, someone at Unity already has a GUID component setup, though I
+// didn't learn about it until recently:
+// https://github.com/Unity-Technologies/guid-based-reference
+// Also, this approach doesn't have a manager, though I'm not sure if this
+// actually needs to use this manager?
+
+== Introduction
+
+If you've ever tried to save data for a large number of entities in a
+video game, you've probably come across an approach that looks like this:
+
+1. Associate each entity with a persistent, unique ID.
+2. Create a key-value store (like a Python dictionary), using these IDs as keys
+and records with the relevant data for each entity as values.
+3. Write the key-value store to disk / read the key-value store from disk as
+necessary.
+
+It's possible to go into significantly more detail for each of these steps, but
+this article will focus primarily on the first one: assigning persistent, unique
+IDs.
+
+== GUIDs
+
+First of all, let's settle what a GUID is. In short, a GUID (also known as a
+https://en.wikipedia.org/wiki/Universally_unique_identifier[UUID]) is a 128-bit
+data structure that represents a globally unique ID.
+
+As the name of this article implies, we'll be using GUIDs as our IDs in this
+article.
+
+Specifically, we'll be (automatically) creating these GUIDs in the editor, so
+that the specific GUID value for each GameObject is part of its scene. This will
+keep these GUIDs the same every time the player plays the game.
+
+Unity already uses GUIDs to refer to different assets in the editor (and you can
+actually see them in use if you look into the .meta or .asset files in a Unity
+project).
+
+It's worth nothing that Unity already creates unique IDs to refer to each
+GameObject. However, these IDs will change between
+https://docs.unity3d.com/ScriptReference/Object.GetInstanceID.html[player
+runtime and Editor sessions], making them useless for the purposes of
+saving/loading data.
+
+// FIXME(Chris): Mention that we'll be using the C# standard library's GUID
+// type, which comes with an easy method to generate new IDs
+
+== The ExecuteAlways attribute
+
+In Unity, our C# scripts typically run during a player's runtime session.
+That is, they execute code either when we play the game in the editor or when
+the player is running an actual build.
+
+Since we're creating GUIDs in the editor, we'll need to execute some code in the
+editor itself. To achieve this, we'll use
+https://docs.unity3d.com/ScriptReference/ExecuteAlways.html[the `ExecuteAlways`
+attribute].
+
+It's worth noting that there is an
+https://docs.unity3d.com/2021.3/Documentation/ScriptReference/ExecuteInEditMode.html[older
+and similar attribute called `ExecuteInEditMode`], which has been deprecated.
+Annoyingly, this deprecation warning only shows up in the middle of its
+documentation (at least for Unity version 2021.3).
+
+The ExecuteAlways attribute is fairly straightforward. This example is taken
+from Unity's documentation for the attribute:
+
+[source,csharp]
+----
+using UnityEngine;
+
+[ExecuteAlways]
+public class ExampleClass : MonoBehaviour
+{
+    void Start()
+    {
+        if (Application.IsPlaying(gameObject))
+        {
+            // Play logic
+        }
+        else
+        {
+            // Editor logic
+        }
+    }
+}
+----
+
+== C# Preprocessor Directives
+
+== The nameof expression
+
+== SerializedProperty and SerializedObject
