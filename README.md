@@ -26,3 +26,8 @@ bundle install
 ```sh
 bundle exec jekyll serve
 ```
+
+To see draft posts:
+```sh
+bundle exec jekyll serve --drafts
+```
