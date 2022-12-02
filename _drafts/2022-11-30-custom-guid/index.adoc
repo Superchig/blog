@@ -22,6 +22,27 @@ It's possible to go into significantly more detail for each of these steps, but
 this article will focus primarily on the first one: assigning persistent, unique
 IDs.
 
+== The Problem
+
+Specifically, this article will explain how to create a MonoBehaviour script
+which, when attached to a GameObject, will assign it a unique ID that persists
+between different play sessions.
+
+With a script like this, you would want these IDs to be unique even in the
+following situations:
+
+1. A developer duplicates a GameObject (in the editor).
+2. A developer converts a GameObject into a prefab (in the editor).
+3. A developer instantiates a prefab (in the editor).
+
+If a normal MonoBehaviour script were attached to the GameObject in any of these
+cases, then the fields on that script would be duplicated along with the
+GameObject.
+
+You would have GameObjects with the same IDs as their prefabs, or duplicate
+GameObjects with identical IDs. This would make it impossible to save/load data
+for individual GameObjects.
+
 == GUIDs
 
 First of all, let's settle what a GUID is. In short, a GUID (also known as a
