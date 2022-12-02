@@ -405,3 +405,41 @@ b.conum * {
 .stretch {
     width: 100%;
 }
+
+/* Table of Contents */
+
+div#toctitle {
+    font-size: 1.375rem;
+    color: #7a2518;
+
+    line-height: 1.2;
+    word-spacing: -.05rem;
+}
+
+#toc {
+    font-family: 'Open Sans';
+    border-top: 1px solid #e7e7e9;
+    border-bottom: 1px solid #e7e7e9;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+#toc a {
+    color: #2156a5;
+    text-decoration-color: unset;
+    text-decoration: none;
+}
+
+#toc a:hover {
+    color: #5489D8;
+}
+
+#toc ul {
+    list-style: none;
+    margin-bottom: 0rem;
+}
+
+#toc ul.sectlevel1 {
+    list-style: none;
+    margin-left: 0rem;
+}
