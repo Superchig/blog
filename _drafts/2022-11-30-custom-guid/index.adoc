@@ -69,14 +69,16 @@ saving/loading data.
 // FIXME(Chris): Mention that we'll be using the C# standard library's GUID
 // type, which comes with an easy method to generate new IDs
 
-== The ExecuteAlways attribute
+== The ExecuteAlways Attribute
 
 In Unity, our C# scripts typically run during a player's runtime session.
 That is, they execute code either when we play the game in the editor or when
 the player is running an actual build.
 
 Since we're creating GUIDs in the editor, we'll need to execute some code in the
-editor itself. To achieve this, we'll use
+editor itself. That is, we'll want the script to execute before we even start
+the game, as we create prefabs or instantiate GameObjects while in the editor.
+To achieve this, we'll use
 https://docs.unity3d.com/ScriptReference/ExecuteAlways.html[the `ExecuteAlways`
 attribute].
 
@@ -110,8 +112,28 @@ public class ExampleClass : MonoBehaviour
 }
 ----
 
+Since this class has been marked with `ExecuteAlways`, it will potentially
+execute code at both runtime and in the editor itself.
+
+To execute different code between runtime and the editor, we can use the
+`Application.IsPlaying` method, passing the script's own GameObject as an
+argument. This method will return true if we're in a play session, and it will
+return false if we're only in the editor.
+
+==== Start and Update
+
+With a normal script, the `Start` and `Update` methods execute when the scene is
+loaded and every frame, respectively. Both of these methods only run during a
+play session. With the `ExecuteAlways` attribute, these methods will execute
+in the editor as well as during a play session. Specifically:
+
+- In the editor, `Start` will execute when a script is first attached to a
+  GameObject and when the scene is loaded.
+- In the editor, `Update` will be called whenever something in the scene is
+  changed.
+
 == C# Preprocessor Directives
 
-== The nameof expression
+== The nameof Expression
 
 == SerializedProperty and SerializedObject
