@@ -132,6 +132,10 @@ in the editor as well as during a play session. Specifically:
 - In the editor, `Update` will be called whenever something in the scene is
   changed.
 
+We'll be using both of these methods in our script. Though we could conceptually
+do everything in `Update`, we'll use `Start` to perform particularly expensive
+operations as a performance optimization.
+
 == C# Preprocessor Directives
 
 == The nameof Expression
