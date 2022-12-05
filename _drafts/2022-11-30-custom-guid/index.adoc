@@ -136,8 +136,36 @@ We'll be using both of these methods in our script. Though we could conceptually
 do everything in `Update`, we'll use `Start` to perform particularly expensive
 operations as a performance optimization.
 
+== SerializedProperty and SerializedObject
+
+With these concepts already explained, let's start the actual script:
+
+[source,csharp]
+----
+[ExecuteAlways]
+public class CustomGUID : MonoBehaviour
+{
+    public string guid;
+
+    // Hasn't been implemented yet...
+}
+----
+
+As you can see, all we really have of note is a string field called `guid`.
+Though `Guid` already exists as a part of
+https://learn.microsoft.com/en-us/dotnet/api/system.guid?view=net-7.0[C#'s
+standard library], we'll be storing them as strings for a few reasons:
+
+1. Unity's built-in serialization doesn't directly support `Guid` fields, but it
+   does support strings.
+2. By directly serializing strings, we can easily view the GUIDs in the editor
+   itself, seeing the typical hexadecimal representation for a GUID.
+
+// FIXME(Chris): Describe the prefab/field-modification bug. But should we show
+// the faulty implementation first?
+
 == C# Preprocessor Directives
 
 == The nameof Expression
 
-== SerializedProperty and SerializedObject
+== PrefabStageUtility
