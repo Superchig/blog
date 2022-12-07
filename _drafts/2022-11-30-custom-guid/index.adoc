@@ -142,6 +142,8 @@ With these concepts already explained, let's start the actual script:
 
 [source,csharp]
 ----
+// Imports...
+
 [ExecuteAlways]
 public class CustomGUID : MonoBehaviour
 {
@@ -160,6 +162,30 @@ standard library], we'll be storing them as strings for a few reasons:
    does support strings.
 2. By directly serializing strings, we can easily view the GUIDs in the editor
    itself, seeing the typical hexadecimal representation for a GUID.
+
+==== A Naive (and Buggy) Approach
+
+Under normal circumstances, you would update this `guid` field by simply
+assigning to it:
+
+[source,csharp]
+----
+// Imports...
+
+[ExecuteAlways]
+public class CustomGUID : MonoBehaviour
+{
+    public string guid;
+
+    private void Awake()
+    {
+    	// Assign a new GUID every time a script is attached or when the scene
+	// loads:
+	guid = Guid.NewGuid();
+    }
+}
+----
+
 
 // FIXME(Chris): Describe the prefab/field-modification bug. But should we show
 // the faulty implementation first?
