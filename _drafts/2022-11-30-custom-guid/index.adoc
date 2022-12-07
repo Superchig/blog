@@ -182,7 +182,7 @@ public class CustomGUID : MonoBehaviour
     {
         if (/* Some condition */) {
             // Assign a new GUID as necessary
-	    guid = Guid.NewGuid();
+	    guid = Guid.NewGuid().ToString();
         }
     }
 }
@@ -191,9 +191,20 @@ public class CustomGUID : MonoBehaviour
 When simply assigning to GameObjects or duplicating them, this code will assign
 GUIDs properly.
 
+==== Bug: Prefabs
+
 However, when this CustomGUID script is attached to a prefab, an obvious bug
-will appear: the script will be unable to properly read from or write to the
-`guid` field.
+will appear: the script will be unable to properly read from the `guid` field.
+
+That is, when attached to a prefab:
+
+1. The script will always consider the `guid` to initially be `null`, even if
+the field has previously been set to an actual GUID.
+2. This makes it difficult to detect when we should generate a new GUID (more on
+this later).
+
+// FIXME(Chris): Discuss how we don't want the GUID to change every time we load
+// a scene, which will (among other things) pollute our commits
 
 To remedy this, we will use parts of the Unity API that are normally seen in
 custom editors: the
@@ -202,10 +213,77 @@ and
 https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedProperty.html[SerializedProperty]
 classes.
 
-==== Editor API
+==== Why Use SerializedObject and SerializedProperty?
 
-// FIXME(Chris): Describe the prefab/field-modification bug. But should we show
-// the faulty implementation first?
+In short, `SerializedObject` and `SerializedProperty` are how you're supposed to
+modify the fields of a MonoBehavior script when executing code in the Unity
+editor itself. When used, they will automatically support key editor
+functionality like undo and prefab overrides.
+
+For our use case, we're more interested in the fact that these classes avoid the
+prefab field-reading bug mentioned earlier.
+
+// The `SerializedObject` and `SerializedProperty` APIs are a little clunky, so
+// we'll 
+
+==== Editor API: SerializedObject
+
+As its name might imply, `SerializedObject` represents an object and will
+indirectly allow us to modify the fields in this object. Specifically, it
+represents an object that descends from the `Object` class
+https://docs.unity3d.com/2021.3/Documentation/ScriptReference/Object.html[provided
+by Unity].
+
+It's worth noting that C# also provides an `Object` class, and that
+https://learn.microsoft.com/en-us/dotnet/api/system.object?view=net-7.0[all
+classes in C# inherit from this class]. Somewhat confusingly, this `Object`
+class is *not* the `Object` class provided by Unity.
+
+Both GameObjects and MonoBehavior scripts descend from Unity's `Object` class,
+so we'll be able to use `SerializedObject` to represent the script that we want
+to modify.
+
+Concretely speaking, we'll only directly use a `SerializedObject` to gain access
+to a `SerializedProperty`.
+
+==== Editor API: SerializedProperty
+
+The `SerializedProperty` class allows us to actually modify an object's field,
+when used together with a `SerializedObject`.
+
+Broadly speaking, there are 4 steps that need to be followed to modify a field
+in this way:
+
+1. Obtain a `SerializedObject` that represents our MonoBehavior script.
+2. Obtain a `SerializedProperty` from the `SerializedObject` that represents a
+   specific field.
+3. Tell the `SerializedProperty` that you want to...
+
+[source,csharp]
+----
+// Imports...
+
+[ExecuteAlways]
+public class CustomGUID : MonoBehaviour
+{
+    public string guid;
+
+    private void Awake()
+    {
+        if (/* Some condition */) {
+            // Assign a new GUID as necessary
+
+            SerializedObject serializedObject = new SerializedObject(this);
+
+            SerializedProperty guidProperty = serializedObject.FindProperty(nameof("guid"));
+
+            guidProperty.stringValue = Guid.NewGuid().ToString();
+
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+}
+----
 
 == C# Preprocessor Directives
 
