@@ -156,14 +156,15 @@ public class CustomGUID : MonoBehaviour
 As you can see, all we really have of note is a string field called `guid`.
 Though `Guid` already exists as a part of
 https://learn.microsoft.com/en-us/dotnet/api/system.guid?view=net-7.0[C#'s
-standard library], we'll be storing them as strings for a few reasons:
+standard library] (and we'll be using this type to generate our GUIDs), we'll be
+storing them as strings for a few reasons:
 
 1. Unity's built-in serialization doesn't directly support `Guid` fields, but it
    does support strings.
 2. By directly serializing strings, we can easily view the GUIDs in the editor
    itself, seeing the typical hexadecimal representation for a GUID.
 
-==== A Naive (and Buggy) Approach
+==== A Naive (and Somewhat Buggy) Approach
 
 Under normal circumstances, you would update this `guid` field by simply
 assigning to it:
@@ -179,13 +180,29 @@ public class CustomGUID : MonoBehaviour
 
     private void Awake()
     {
-    	// Assign a new GUID every time a script is attached or when the scene
-	// loads:
-	guid = Guid.NewGuid();
+        if (/* Some condition */) {
+            // Assign a new GUID as necessary
+	    guid = Guid.NewGuid();
+        }
     }
 }
 ----
 
+When simply assigning to GameObjects or duplicating them, this code will assign
+GUIDs properly.
+
+However, when this CustomGUID script is attached to a prefab, an obvious bug
+will appear: the script will be unable to properly read from or write to the
+`guid` field.
+
+To remedy this, we will use parts of the Unity API that are normally seen in
+custom editors: the
+https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedObject.html[SerializedObject]
+and
+https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedProperty.html[SerializedProperty]
+classes.
+
+==== Editor API
 
 // FIXME(Chris): Describe the prefab/field-modification bug. But should we show
 // the faulty implementation first?
