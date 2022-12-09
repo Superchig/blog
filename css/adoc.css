@@ -4,7 +4,7 @@ p, ol, ul, dl, hr, table, .listingblock, .imageblock, .sidebarblock {
     margin-bottom: 0.5em;
 }
 .listingblock {
-    overflow-x: auto;
+    overflow-x: scroll;
 }
 
 img, object, svg, video {
