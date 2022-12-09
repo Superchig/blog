@@ -193,8 +193,10 @@ GUIDs properly.
 
 ==== Bug: Prefabs
 
-However, when this CustomGUID script is attached to a prefab, an obvious bug
+However, when this CustomGUID script is attached to a prefab, an annoying bug
 will appear: the script will be unable to properly read from the `guid` field.
+
+// FIXME(Chris): Rewrite this numbered list out of existence
 
 That is, when attached to a prefab:
 
@@ -246,22 +248,31 @@ to modify.
 Concretely speaking, we'll only directly use a `SerializedObject` to gain access
 to a `SerializedProperty`.
 
+// TODO(Chris): Improve styling for 3-equals (`===`) sections, making them
+// smaller than 2-equals and possibly a different color (dark yellow?)
+
 ==== Editor API: SerializedProperty
 
-The `SerializedProperty` class allows us to actually modify an object's field,
-when used together with a `SerializedObject`.
+The `SerializedProperty` class allows us to actually modify an object's field.
+However, in order to obtain it, we first need to create a `SerializedObject`
+(which is why I introduced a `SerializedObject` first).
 
-Broadly speaking, there are 4 steps that need to be followed to modify a field
-in this way:
+While using this part of the Editor API, we need to follow these 4 broad steps
+to modify an object's field:
 
 1. Obtain a `SerializedObject` that represents our MonoBehavior script.
 2. Obtain a `SerializedProperty` from the `SerializedObject` that represents a
    specific field.
-3. Tell the `SerializedProperty` that you want to...
+3. Tell the `SerializedProperty` that you want to change the relevant field.
+4. Finalize your changes via the `SerializedObject`.
+
+The following example code will show how to set a GUID via this part of the
+Editor API:
 
 [source,csharp]
 ----
-// Imports...
+using UnityEditor;
+// Other Imports...
 
 [ExecuteAlways]
 public class CustomGUID : MonoBehaviour
@@ -273,19 +284,41 @@ public class CustomGUID : MonoBehaviour
         if (/* Some condition */) {
             // Assign a new GUID as necessary
 
+            // By passing `this` into the constructor, we give our
+            // SerializedObject access to our CustomGUID script.
             SerializedObject serializedObject = new SerializedObject(this);
 
-            SerializedProperty guidProperty = serializedObject.FindProperty(nameof("guid"));
-
+            // `guidProperty` will correspond to our `guid` property in our
+            // CustomGUID script.
+            SerializedProperty guidProperty =
+                serializedObject.FindProperty("guid");
+            
+            // This is where we actually generate and assign a new GUID.
             guidProperty.stringValue = Guid.NewGuid().ToString();
 
+            // For any of our modifications to successfully last, we need to
+            // call `ApplyModifiedProperties()`. without this, none of our
+            // properties will actually be changed in our CustomGUID script.
             serializedObject.ApplyModifiedProperties();
         }
     }
 }
 ----
 
+Note that, in order to use these 2 classes, we need a `using UnityEditor`
+statement.
+
+==== Problem: We Can't Build!
+
+If you tried to build a project that uses `SerializedObject` and
+`SerializedProperty` in a MonoBehavior script (as we demonstrated above), you
+would run into an annoying problem: the project would fail to build entirely.
+
 == C# Preprocessor Directives
+
+// FIXME(Chris): Talk about how the documentation explicitly says that
+// UnityEditor can't be referenced by runtime code compiled into a playable
+// game.
 
 == The nameof Expression
 
