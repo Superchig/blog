@@ -327,17 +327,103 @@ MonoBehavior script that has been annotated with the `ExecuteAlways` attribute.
 As with normal MonoBehavior scripts, our script will be compiled when making a
 build.
 
-The key 
+Here's a key insight: even though our `CustomGUID` script will be compiled for a
+user-facing build, only part of its functionality needs to be available when the
+game is running.
+
+1. In the game itself: we need access to the GUID for each relevant GameObject.
+   This does not require any of the Editor APIs. This essentially just requires
+   the `guid` field.
+2. In the editor: we need to ensure that the GUIDs attached to GameObjects are
+   unique, even when a GameObject is duplicated or instantiated from a prefab.
+   This will require the Editor APIs, so that we can properly assign to the
+   `guid` field from the editor itself.
+
+With this in mind, we can make a key conclusion: we only need the Editor APIs
+while in the editor itself.
 
 == C# Preprocessor Directives
 
-In order to make our project build properly, we'll be using something called C#
-preprocessor directives.
+In order to make our project build properly, we'll be using something called
+https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/preprocessor-directives[C#
+preprocessor directives].
 
-// FIXME(Chris): Talk about how the documentation explicitly says that
-// UnityEditor can't be referenced by runtime code compiled into a playable
-// game.
+With this feature of C# (and its integration with Unity), we can avoid compiling
+the editor-specific part of our script in player-facing builds.
+
+=== Standalone Example: C# Preprocessor Directives
+
+Let's look at a brief of example of the relevant syntax:
+
+[source]
+----
+#if UNITY_EDITOR
+
+    Debug.Log("Hello, editor!");
+
+#endif
+----
+
+In the example above, the `#if UNITY_EDITOR` and `#endif` lines are preprocessor
+directives{empty}footnote:[These are called preprocessor directives because they
+are heavily inspired by a similar mechanism associated with the C programming
+language. When programming with C, the preprocessor performs "dumb" textual
+manipulation of the source code before the compiler actually parses and compiles
+the anything into machine code. Traditionally, the preprocessor was a separate
+program entirely, being invoked by the compiler before anything else was done.
+pass:p[ +]
+pass:p[ +]
+In pass:[C#], the compiler doesn't use a separate preprocessor, but it does
+process each of these directives as if there were a separate program running
+before the rest of the compiler.]. With these directives, the `Debug.Log("Hello,
+editor!")` line will only compile within the editor itself. When we make a full
+build for the game, this line (and everything between these two directives)
+won't be compiled at all. From the compiler's point of view, it'll be as if
+these lines simply aren't in our source code.
+
+This technique is called
+https://docs.unity3d.com/2021.3/Documentation/Manual/PlatformDependentCompilation.html[conditional ]
+https://en.wikipedia.org/wiki/Conditional_compilation[compilation],
+as it only compiles parts of the code when certain conditions are
+true (like being in the Unity Editor or not).
+
+=== Script Usage: C# Preprocessor Directives
+
+Now that we have an understanding of the syntax, let's use C# preprocessor
+directives in our script itself:
+
+[source,csharp]
+----
+using UnityEditor;
+// Other Imports...
+
+[ExecuteAlways]
+public class CustomGUID : MonoBehaviour
+{
+    public string guid;
+
+    private void Awake()
+    {
+#if UNITY_EDITOR
+        if (/* Some condition */) {
+            // Assign a new GUID as necessary
+
+            SerializedObject serializedObject = new SerializedObject(this);
+
+            SerializedProperty guidProperty =
+                serializedObject.FindProperty("guid");
+            
+            guidProperty.stringValue = Guid.NewGuid().ToString();
+
+            serializedObject.ApplyModifiedProperties();
+        }
+#endif
+    }
+}
+----
 
 == The nameof Expression
 
 == PrefabStageUtility
+
+== Further Reading
