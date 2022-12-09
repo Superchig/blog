@@ -120,7 +120,7 @@ To execute different code between runtime and the editor, we can use the
 argument. This method will return true if we're in a play session, and it will
 return false if we're only in the editor.
 
-==== Start and Update
+=== Start and Update
 
 With a normal script, the `Start` and `Update` methods execute when the scene is
 loaded and every frame, respectively. Both of these methods only run during a
@@ -164,7 +164,7 @@ storing them as strings for a few reasons:
 2. By directly serializing strings, we can easily view the GUIDs in the editor
    itself, seeing the typical hexadecimal representation for a GUID.
 
-==== A Naive (and Somewhat Buggy) Approach
+=== A Naive (and Somewhat Buggy) Approach
 
 Under normal circumstances, you would update this `guid` field by simply
 assigning to it:
@@ -191,7 +191,7 @@ public class CustomGUID : MonoBehaviour
 When simply assigning to GameObjects or duplicating them, this code will assign
 GUIDs properly.
 
-==== Bug: Prefabs
+=== Bug: Prefabs
 
 However, when this CustomGUID script is attached to a prefab, an annoying bug
 will appear: the script will be unable to properly read from the `guid` field.
@@ -215,7 +215,7 @@ and
 https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedProperty.html[SerializedProperty]
 classes.
 
-==== Why Use SerializedObject and SerializedProperty?
+=== Why Use SerializedObject and SerializedProperty?
 
 In short, `SerializedObject` and `SerializedProperty` are how you're supposed to
 modify the fields of a MonoBehavior script when executing code in the Unity
@@ -228,7 +228,7 @@ prefab field-reading bug mentioned earlier.
 // The `SerializedObject` and `SerializedProperty` APIs are a little clunky, so
 // we'll 
 
-==== Editor API: SerializedObject
+=== Editor API: SerializedObject
 
 As its name might imply, `SerializedObject` represents an object and will
 indirectly allow us to modify the fields in this object. Specifically, it
@@ -251,7 +251,7 @@ to a `SerializedProperty`.
 // TODO(Chris): Improve styling for 3-equals (`===`) sections, making them
 // smaller than 2-equals and possibly a different color (dark yellow?)
 
-==== Editor API: SerializedProperty
+=== Editor API: SerializedProperty
 
 The `SerializedProperty` class allows us to actually modify an object's field.
 However, in order to obtain it, we first need to create a `SerializedObject`
@@ -308,7 +308,7 @@ public class CustomGUID : MonoBehaviour
 Note that, in order to use these 2 classes, we need a `using UnityEditor`
 statement.
 
-==== Problem: We Can't Build!
+=== Problem: We Can't Build!
 
 If you tried to build a project that uses `SerializedObject` and
 `SerializedProperty` in a MonoBehavior script (as we demonstrated above), you

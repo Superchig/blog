@@ -66,6 +66,13 @@ h2, h3, .sidebarblock>.content>.title {
     margin-top: 1rem;
     margin-bottom: .5rem;
 }
+h3 {
+    /* text-amber-600 */
+    color: rgb(217 119 6);
+    font-size: 1.1rem;
+    /* font-weight */
+    font-weight: 700;
+}
 .sidebarblock>.content>.title {
     color: #7a2518;
     margin-top: 0;
