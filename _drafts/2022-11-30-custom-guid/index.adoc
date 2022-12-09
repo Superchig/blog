@@ -314,7 +314,25 @@ If you tried to build a project that uses `SerializedObject` and
 `SerializedProperty` in a MonoBehavior script (as we demonstrated above), you
 would run into an annoying problem: the project would fail to build entirely.
 
+Our problem most directly originates with our use of the `UnityEditor`
+namespace. We need this namespace to access `SerializedObject` and
+`SerializedProperty`, but, as stated in its
+https://docs.unity3d.com/2021.3/Documentation/ScriptReference/UnityEditor.html[documentation],
+we can't reference this namespace in scripts that are compiled for a
+final build.
+
+APIs in `UnityEditor` are typically used in when writing custom Editors in
+Unity. In our case, we're not doing this. Instead, we're using these APIs in a
+MonoBehavior script that has been annotated with the `ExecuteAlways` attribute.
+As with normal MonoBehavior scripts, our script will be compiled when making a
+build.
+
+The key 
+
 == C# Preprocessor Directives
+
+In order to make our project build properly, we'll be using something called C#
+preprocessor directives.
 
 // FIXME(Chris): Talk about how the documentation explicitly says that
 // UnityEditor can't be referenced by runtime code compiled into a playable
