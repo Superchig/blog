@@ -218,7 +218,7 @@ public class CustomGUID : MonoBehaviour
 
     private void Awake()
     {
-        if (/* Some condition */) {
+        if (!Application.IsPlaying(gameObject)) {
             // Assign a new GUID as necessary
 	    guid = Guid.NewGuid().ToString();
         }
@@ -325,7 +325,7 @@ public class CustomGUID : MonoBehaviour
 
     private void Awake()
     {
-        if (/* Some condition */) {
+        if (!Application.IsPlaying(gameObject)) {
             // Assign a new GUID as necessary
 
             // By passing `this` into the constructor, we give our
@@ -449,7 +449,7 @@ public class CustomGUID : MonoBehaviour
     private void Awake()
     {
 #if UNITY_EDITOR
-        if (/* Some condition */) {
+        if (!Application.IsPlaying(gameObject)) {
             // Assign a new GUID as necessary
 
             SerializedObject serializedObject = new SerializedObject(this);
