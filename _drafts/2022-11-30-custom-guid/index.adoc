@@ -66,9 +66,6 @@ https://docs.unity3d.com/ScriptReference/Object.GetInstanceID.html[player
 runtime and Editor sessions], making them useless for the purposes of
 saving/loading data.
 
-// FIXME(Chris): Mention that we'll be using the C# standard library's GUID
-// type, which comes with an easy method to generate new IDs
-
 == The ExecuteAlways Attribute
 
 In Unity, our C# scripts typically run during a player's runtime session.
@@ -88,8 +85,10 @@ and similar attribute called `ExecuteInEditMode`], which has been deprecated.
 Annoyingly, this deprecation warning only shows up in the middle of its
 documentation (at least for Unity version 2021.3).
 
-The ExecuteAlways attribute is fairly straightforward. This example is taken
-from Unity's documentation for the attribute:
+=== Example: ExecuteAlways
+
+The syntax for the ExecuteAlways attribute is fairly straightforward. This
+example is taken from Unity's documentation for the attribute:
 
 [source,csharp]
 ----
@@ -112,48 +111,87 @@ public class ExampleClass : MonoBehaviour
 }
 ----
 
-Since this class has been marked with `ExecuteAlways`, it will potentially
-execute code at both runtime and in the editor itself.
+As seen on line 3, this class has been marked with `ExecuteAlways`. As a result,
+it now has the ability to execute code at both runtime and in the editor itself.
 
 To execute different code between runtime and the editor, we can use the
 `Application.IsPlaying` method, passing the script's own GameObject as an
 argument. This method will return true if we're in a play session, and it will
 return false if we're only in the editor.
 
-=== Start and Update
+=== Start, Awake, and Update
 
-With a normal script, the `Start` and `Update` methods execute when the scene is
+With a normal script, the `Start`, `Awake`, `Update` methods execute when the scene is
 loaded and every frame, respectively. Both of these methods only run during a
 play session. With the `ExecuteAlways` attribute, these methods will execute
 in the editor as well as during a play session. Specifically:
 
 - In the editor, `Start` will execute when a script is first attached to a
   GameObject and when the scene is loaded.
+- In the editor, `Awake` behaves similarly to `Start`, except that it is
+  executed first and it will execute even if the script component is disabled.
 - In the editor, `Update` will be called whenever something in the scene is
   changed.
 
-We'll be using both of these methods in our script. Though we could conceptually
-do everything in `Update`, we'll use `Start` to perform particularly expensive
-operations as a performance optimization.
+We'll be using the `Awake` and `Update` methods in our script. Though we could
+conceptually do everything in `Update`, we'll use `Awake` to perform
+particularly expensive operations as a performance optimization.
 
-== SerializedProperty and SerializedObject
+=== Script Usage: ExecuteAlways
 
-With these concepts already explained, let's start the actual script:
+Let's start our actual script, using these features:
 
 [source,csharp]
 ----
-// Imports...
+// Using statements...
+
+[ExecuteAlways]
+public class CustomGUID : MonoBehavior
+{
+    private void Awake()
+    {
+        if (!Application.IsPlaying(gameObject))
+        {
+            // Only in editor
+        }
+    }
+
+    private void Update()
+    {
+        if (!Application.IsPlaying(gameObject))
+        {
+            // Only in editor
+        }
+    }
+}
+----
+
+In this script, both our `Awake` and our `Update` methods will only execute code
+in the editor. They won't execute any code when the player is actually playing
+the game.
+
+== Editor APIs: SerializedProperty and SerializedObject
+
+We need the editor APIs to properly modify our GUID field from the editor, even
+if the script is attached to prefab.
+
+=== Script Usage: String Field For GUID
+
+We'll store our GUIDs as strings, via a field:
+
+[source,csharp]
+----
+// Using statements...
 
 [ExecuteAlways]
 public class CustomGUID : MonoBehaviour
 {
     public string guid;
 
-    // Hasn't been implemented yet...
+    // Awake and Update methods...
 }
 ----
 
-As you can see, all we really have of note is a string field called `guid`.
 Though `Guid` already exists as a part of
 https://learn.microsoft.com/en-us/dotnet/api/system.guid?view=net-7.0[C#'s
 standard library] (and we'll be using this type to generate our GUIDs), we'll be
@@ -171,7 +209,7 @@ assigning to it:
 
 [source,csharp]
 ----
-// Imports...
+// Using statements...
 
 [ExecuteAlways]
 public class CustomGUID : MonoBehaviour
@@ -198,18 +236,24 @@ will appear: the script will be unable to properly read from the `guid` field.
 
 // FIXME(Chris): Rewrite this numbered list out of existence
 
-That is, when attached to a prefab:
+That is, when attached to a prefab, the script will always consider the `guid`
+to initially be `null`, even if the prefab is actually storing a valid GUID in
+the field. This makes it difficult to detect when we should generate a new GUID
+(we'll discuss the exact algorithm for this later).
 
-1. The script will always consider the `guid` to initially be `null`, even if
-the field has previously been set to an actual GUID.
-2. This makes it difficult to detect when we should generate a new GUID (more on
-this later).
+One way to avoid this problem is to change the GUID every time we load a scene
+(or fully open up a prefab). However, there are a few annoying issues with this
+approach:
 
-// FIXME(Chris): Discuss how we don't want the GUID to change every time we load
-// a scene, which will (among other things) pollute our commits
+- Whenever leaving a scene, the Unity editor will ask if we want to save, even
+  if it doesn't seem like we've changed anything (as the GUIDs of the
+  GameObjects will have changed).
+- Our commits will constantly show scenes and prefabs being changed, even if we
+  didn't apparently modify them (as the GUIDs of their GameObjects will have
+  changed upon opening them).
 
-To remedy this, we will use parts of the Unity API that are normally seen in
-custom editors: the
+For a more thorough solution, we will use parts of the Unity API that are
+normally seen in custom editors: the
 https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedObject.html[SerializedObject]
 and
 https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedProperty.html[SerializedProperty]
@@ -351,7 +395,7 @@ preprocessor directives].
 With this feature of C# (and its integration with Unity), we can avoid compiling
 the editor-specific part of our script in player-facing builds.
 
-=== Standalone Example: C# Preprocessor Directives
+=== Example: C# Preprocessor Directives
 
 Let's look at a brief of example of the relevant syntax:
 
