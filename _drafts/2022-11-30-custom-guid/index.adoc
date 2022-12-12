@@ -22,6 +22,7 @@ It's possible to go into significantly more detail for each of these steps, but
 this article will focus primarily on the first one: assigning persistent, unique
 IDs.
 
+[#the-problem]
 == The Problem
 
 Specifically, this article will explain how to create a MonoBehaviour script
@@ -250,9 +251,9 @@ approach:
 - Whenever leaving a scene, the Unity editor will ask if we want to save, even
   if it doesn't seem like we've changed anything (as the GUIDs of the
   GameObjects will have changed).
-- Our commits will constantly show scenes and prefabs being changed, even if we
-  didn't apparently modify them (as the GUIDs of their GameObjects will have
-  changed upon opening them).
+- Our commits in git will constantly show scenes and prefabs being changed, even
+  if we didn't apparently modify them (as the GUIDs of their GameObjects will
+  have changed upon opening them).
 
 For a more thorough solution, we will use parts of the Unity API that are
 normally seen in custom editors: the
@@ -556,6 +557,11 @@ If we were to rename the `guid` field (perhaps to `id`) in our IDE, then our IDE
 would automatically use the new name on line 20 for us. By using this feature,
 we no longer need to worry about changing the argument to
 `serializedObject.FindProperty()`.
+
+== Handling Duplication
+
+As we mentioned <<the-problem, near the beginning of this post>>, we need to
+ensure that the GUID is different
 
 == PrefabStageUtility
 
