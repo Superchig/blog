@@ -326,7 +326,7 @@ public class CustomGUID : MonoBehaviour
     private void Awake()
     {
         if (!Application.IsPlaying(gameObject)) {
-            // Assign a new GUID as necessary
+            // For now, always assign a new GUID
 
             // Step 1
             SerializedObject serializedObject = new SerializedObject(this);
@@ -444,19 +444,21 @@ directives in our script itself:
 
 [source,csharp]
 ----
+// Other using statements...
+#if UNITY_EDITOR
 using UnityEditor;
-// Other Imports...
+#endif
 
 [ExecuteAlways]
 public class CustomGUID : MonoBehaviour
 {
     public string guid;
 
+#if UNITY_EDITOR
     private void Awake()
     {
-#if UNITY_EDITOR
         if (!Application.IsPlaying(gameObject)) {
-            // Assign a new GUID as necessary
+            // For now, always assign a new GUID
 
             SerializedObject serializedObject = new SerializedObject(this);
 
@@ -467,10 +469,25 @@ public class CustomGUID : MonoBehaviour
 
             serializedObject.ApplyModifiedProperties();
         }
-#endif
     }
+#endif
+
+    // Update method...
 }
 ----
+
+There are 2 blocks of code that we conditionally compile, since both of them
+involve the Editor APIs:
+
+1. The `using UnityEditor` statement.
+2. The `Awake` method.
+
+When we're in our editor, both of these sections of code will compile, ensuring
+that our script can assign different GUID values as necessary.
+
+When making a final build, however, both of sections of code will be ignored,
+leaving our script with no references to `UnityEditor` or anything in that
+namespace. This will allow us to successfully create a final build.
 
 == The nameof Expression
 
@@ -480,10 +497,45 @@ to change the name of our field (e.g. from `"guid"` to `"id"`), then we would
 need to change the argument passed to `serializedObject.FindProperty()` as well.
 
 Fortunately, we can automatically obtain the name of our `guid` field using a
-feature of C# called the `nameof`
-https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/nameof[expression].
+https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/nameof[feature
+of C#] called the `nameof` expression.
+
+As its name would imply, this expression allows us to obtain the name of a
+variable, type, or field as a string constant.
 
 === Script Usage: nameof
+
+Let's use this feature in our script:
+
+[source,csharp]
+----
+using UnityEditor;
+// Other Imports...
+
+[ExecuteAlways]
+public class CustomGUID : MonoBehaviour
+{
+    public string guid;
+
+#if UNITY_EDITOR
+    private void Awake()
+    {
+        if (!Application.IsPlaying(gameObject)) {
+            // For now, always assign a new GUID
+
+            SerializedObject serializedObject = new SerializedObject(this);
+
+            SerializedProperty guidProperty =
+                serializedObject.FindProperty(nameof(guid));
+            
+            guidProperty.stringValue = Guid.NewGuid().ToString();
+
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+#endif
+}
+----
 
 == PrefabStageUtility
 
