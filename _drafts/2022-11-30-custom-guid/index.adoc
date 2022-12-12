@@ -223,6 +223,8 @@ public class CustomGUID : MonoBehaviour
 	    guid = Guid.NewGuid().ToString();
         }
     }
+
+    // Update method not implemented...
 }
 ----
 
@@ -342,6 +344,8 @@ public class CustomGUID : MonoBehaviour
             serializedObject.ApplyModifiedProperties();
         }
     }
+
+    // Update method not implemented...
 }
 ----
 
@@ -473,7 +477,7 @@ public class CustomGUID : MonoBehaviour
     }
 #endif
 
-    // Update method...
+    // Update method not implemented...
 }
 ----
 
@@ -538,7 +542,7 @@ public class CustomGUID : MonoBehaviour
     }
 #endif
 
-    // Update method...
+    // Update method not implemented...
 }
 ----
 
@@ -554,5 +558,7 @@ we no longer need to worry about changing the argument to
 `serializedObject.FindProperty()`.
 
 == PrefabStageUtility
+
+Up to now, we've only
 
 == Further Reading
