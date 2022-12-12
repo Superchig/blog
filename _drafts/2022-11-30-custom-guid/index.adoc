@@ -315,8 +315,8 @@ Editor API:
 
 [source,csharp]
 ----
+// Other using statements...
 using UnityEditor;
-// Other Imports...
 
 [ExecuteAlways]
 public class CustomGUID : MonoBehaviour
@@ -328,29 +328,35 @@ public class CustomGUID : MonoBehaviour
         if (!Application.IsPlaying(gameObject)) {
             // Assign a new GUID as necessary
 
-            // By passing `this` into the constructor, we give our
-            // SerializedObject access to our CustomGUID script.
+            // Step 1
             SerializedObject serializedObject = new SerializedObject(this);
 
-            // `guidProperty` will correspond to our `guid` property in our
-            // CustomGUID script.
+            // Step 2
             SerializedProperty guidProperty =
                 serializedObject.FindProperty("guid");
             
-            // This is where we actually generate and assign a new GUID.
+            // Step 3
             guidProperty.stringValue = Guid.NewGuid().ToString();
 
-            // For any of our modifications to successfully last, we need to
-            // call `ApplyModifiedProperties()`. without this, none of our
-            // properties will actually be changed in our CustomGUID script.
+            // Step 4
             serializedObject.ApplyModifiedProperties();
         }
     }
 }
 ----
 
-Note that, in order to use these 2 classes, we need a `using UnityEditor`
-statement.
+The 4 statements in our `Awake` method shown above correspond to the 4 steps
+necessary for us to modify a field.
+
+[#editor-api-problems]
+There are two potentially problematic details here:
+
+1. On lines 18/19, we obtain a SerializedProperty by searching for a field with
+   the name `"guid"`. This may lead to bugs if we ever change the name of this
+   field (which we will address later in this post).
+2. On line 2, we have to use `using UnityEditor` statement, otherwise we won't
+   have access to our 2 classes from the Editor API. This will lead to problems
+   when making builds of our game (as we will shortly discuss).
 
 === Problem: We Can't Build!
 
@@ -467,6 +473,17 @@ public class CustomGUID : MonoBehaviour
 ----
 
 == The nameof Expression
+
+As we <<editor-api-problems, mentioned earlier>>, we have to obtain a
+SerializedProperty by searching for a field with the name `"guid"`. If we were
+to change the name of our field (e.g. from `"guid"` to `"id"`), then we would
+need to change the argument passed to `serializedObject.FindProperty()` as well.
+
+Fortunately, we can automatically obtain the name of our `guid` field using a
+feature of C# called the `nameof`
+https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/nameof[expression].
+
+=== Script Usage: nameof
 
 == PrefabStageUtility
 
