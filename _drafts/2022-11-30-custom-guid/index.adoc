@@ -9,8 +9,8 @@
 
 == Introduction
 
-If you've ever tried to save data for a large number of entities in a
-video game, you've probably come across an approach that looks like this:
+If you've ever tried to save data for many entities in a video game, you've
+probably come across an approach that looks like this:
 
 1. Associate each entity with a persistent, unique ID.
 2. Create a key-value store (like a Python dictionary), using these IDs as keys
@@ -437,6 +437,7 @@ https://en.wikipedia.org/wiki/Conditional_compilation[compilation],
 as it only compiles parts of the code when certain conditions are
 true (like being in the Unity Editor or not).
 
+[#script-usage-preprocessor]
 === Script Usage: C# Preprocessor Directives
 
 Now that we have an understanding of the syntax, let's use C# preprocessor
@@ -509,8 +510,10 @@ Let's use this feature in our script:
 
 [source,csharp]
 ----
+// Other using statements...
+#if UNITY_EDITOR
 using UnityEditor;
-// Other Imports...
+#endif
 
 [ExecuteAlways]
 public class CustomGUID : MonoBehaviour
@@ -534,8 +537,21 @@ public class CustomGUID : MonoBehaviour
         }
     }
 #endif
+
+    // Update method...
 }
 ----
+
+Compared to our <<script-usage-preprocessor, previous example>>, we've only
+changed one line: line 20.
+
+Specifically, changed our use of `"guid"` to `nameof(guid)`. This will have the
+same functionality while being more robust.
+
+If we were to rename the `guid` field (perhaps to `id`) in our IDE, then our IDE
+would automatically use the new name on line 20 for us. By using this feature,
+we no longer need to worry about changing the argument to
+`serializedObject.FindProperty()`.
 
 == PrefabStageUtility
 
