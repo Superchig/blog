@@ -244,18 +244,7 @@ to initially be `null`, even if the prefab is actually storing a valid GUID in
 the field. This makes it difficult to detect when we should generate a new GUID
 (we'll discuss the exact algorithm for this later).
 
-One way to avoid this problem is to change the GUID every time we load a scene
-(or fully open up a prefab). However, there are a few annoying issues with this
-approach:
-
-- Whenever leaving a scene, the Unity editor will ask if we want to save, even
-  if it doesn't seem like we've changed anything (as the GUIDs of the
-  GameObjects will have changed).
-- Our commits in git will constantly show scenes and prefabs being changed, even
-  if we didn't apparently modify them (as the GUIDs of their GameObjects will
-  have changed upon opening them).
-
-For a more thorough solution, we will use parts of the Unity API that are
+To solve this problem, we will use parts of the Unity API that are
 normally seen in custom editors: the
 https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedObject.html[SerializedObject]
 and
@@ -451,6 +440,7 @@ directives in our script itself:
 [source,csharp]
 ----
 // Other using statements...
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -516,6 +506,7 @@ Let's use this feature in our script:
 [source,csharp]
 ----
 // Other using statements...
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -558,10 +549,52 @@ would automatically use the new name on line 20 for us. By using this feature,
 we no longer need to worry about changing the argument to
 `serializedObject.FindProperty()`.
 
+[#stop-constant-change]
+== Stop Constantly Changing GUIDs Handling Duplication
+
+Up to this point, you may have noticed a possible quirk in our implementation:
+we assign a new GUID to each GameObject every time we load a scene
+(or fully open up a prefab).
+
+There are a few annoying issues with this approach:
+
+- Whenever leaving a scene, the Unity editor will ask if we want to save, even
+  if it doesn't seem like we've changed anything (as the GUIDs of the
+  GameObjects will have changed).
+- Our commits in git will constantly show scenes and prefabs being changed, even
+  if we didn't apparently modify them (as the GUIDs of their GameObjects will
+  have changed upon opening them).
+
+To solve these issue, we'll use a different approach entirely: we'll only modify
+a GameObject's GUID as necessary.
+
 == Handling Duplication
 
 As we mentioned <<the-problem, near the beginning of this post>>, we need to
-ensure that the GUID is different
+ensure that the GUID is different when a GameObject is duplicated.
+
+Normally, when a GameObject is duplicated, all of the fields in its attached
+scripts are duplicated as well.
+
+However, we want the `guid` in field in our `CustomGUID` script GameObject to
+*not* be duplicated (as this stores our GameObject's GUID). How can we achieve
+this?
+
+Ideally, we would want to run code to generate a new GUID whenever the
+GameObject is duplicated. Unfortunately, Unity doesn't provide any direct ways
+to achieve this.
+
+https://answers.unity.com/questions/483434/how-to-call-a-method-when-a-gameobject-has-been-du.html[This
+forum post] seems to describe an indirect way to do this, but the approach shown
+there will also run code when a scene is first entered, so it's not viable for
+our use case. (If we generated a new GUID whenever we entered a scene, then our
+GameObjects would change GUIDs constantly, leaving us with the annoying issues
+<<stop-constant-change, from earlier>>.)
+
+=== Script Usage: Handling Duplication
+
+I'll describe a naive approach to handling duplication here, with only minor
+performance optimizations.
 
 == PrefabStageUtility
 
