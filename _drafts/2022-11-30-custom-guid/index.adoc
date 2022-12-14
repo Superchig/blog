@@ -412,7 +412,7 @@ directives{empty}footnote:[These are called preprocessor directives because they
 are heavily inspired by a similar mechanism associated with the C programming
 language. When programming with C, the preprocessor performs "dumb" textual
 manipulation of the source code before the compiler actually parses and compiles
-the anything into machine code. Traditionally, the preprocessor was a separate
+anything into machine code. Traditionally, the preprocessor was a separate
 program entirely, being invoked by the compiler before anything else was done.
 pass:p[ +]
 pass:p[ +]
@@ -653,8 +653,8 @@ approach used here is optimized enough to see examples in use.
 
 == Handling New GameObjects
 
-When first attaching a `CustomGUID` script to a GameObject, we obviously need to
-assign a GUID.
+When first attaching a `CustomGUID` script to a GameObject, we need to assign a
+GUID.
 
 To avoid having a new GUID every time we load the scene, we'll use `null` as the
 default value for our `guid` field (`null` is the default value for a string
@@ -719,6 +719,157 @@ new GUID. This benefit is also only possible in the `Update` method. If we were
 to check for null or empty in the `Awake` method, we wouldn't see an instant
 response.
 
-== PrefabStageUtility
+== Handling Prefab Instances
+
+We want to ensure that the GUID of our prefab is different from the GUID of any
+of its instances.
+
+Fortunately, the Editor APIs provide a fairly straightforward way to accomplish
+this:
+
+- The `SerializedProperty.isInstantiatedPrefab` property tells us if our
+  property is part of a script which is attached to a prefab instance?
+- The `SerializedProperty.prefabOverride` property tells us if the property has
+  been modified from the property's value in its parent prefab (assuming that
+  the property is attached to a prefab instance).
+
+=== Script Usage: isInstantiatedPrefab and prefabOverride
+
+Let's use these 2 properties to check if the GUID of a prefab instance is the
+same as the GUID of its prefab:
+
+[source,csharp]
+----
+// Inside the CustomGUID class
+
+#if UNITY_EDITOR
+    private void Update()
+    {
+        if (!Application.IsPlaying(gameObject))
+        {
+            SerializedObject serializedObject = new SerializedObject(this);
+
+            SerializedProperty guidProperty =
+                serializedObject.FindProperty(nameof(guid));
+
+            if (String.IsNullOrEmpty(guidProperty.stringValue) ||
+                (guidProperty.isInstantiatedPrefab && !guidProperty.prefabOverride))
+            {
+                guidProperty.stringValue = NewGuid();
+            }
+
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+#endif
+
+----
+
+By checking the negation of `guidProperty.prefabOverride` specifically, we can
+check if our `guid` field is the same as in our prefab.
+
+Using this, this code directly checks if our script is part of a prefab instance
+and if our `guid` field is the same as the original prefab. If so, it generates
+and assigns a new GUID.
+
+== Handling Prefabs (EditorAPIs)
+
+Ideally, we want the GUID of a prefab itself to be null, to prevent us from
+saving/loading information on a prefab when we mean to be saving/loading
+information for its instances.
+
+That is, if we ever accidentally access the GUID of a prefab (while intending to
+access the GUID of one of its instances), we want a glaring `null` value to show
+us that we're doing something wrong.
+
+There are two places in the Unity editor where we might modify a prefab:
+
+1. While we have a scene open, and we are only previewing the prefab (viewing
+   the prefab solely in the inspector).
+2. When we have the prefab opened fully, in its own, special scene which exists
+   just to exit that prefab.
+
+To detect whether or not a `CustomGUID` script (or any other script) is attached
+to a prefab, we have to detect both of these cases.
+
+=== PrefabStage and PrefabStageUtility
+
+Despite my best efforts, I was only able to detect the second case, when we have
+the prefab fully opened in its own special scene.
+
+To check this, I used the `PrefabStage` and `PrefabStageUtility` classes, which
+are part of the editor API.
+
+- A `PrefabStage` represents a special, prefab-specific scene that allows us to
+  edit all of the scenes of a prefab. In the editor, we reach this scene by
+  double-clicking on a prefab.
+- `PrefabStageUtility` contains multiple utility methods, one of which allows us
+  to check if we're currently in a special prefab scene.
+
+=== Script Usage: PrefabStage and PrefabStageUtility
+
+Let's create a method which will check if we're a prefab scene:
+
+[source,csharp]
+----
+// Inside the CustomGUID class
+
+#if UNITY_EDITOR
+    private bool IsPrefab()
+    {
+        PrefabStage currPrefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+
+        return currPrefabStage != null &&
+               currPrefabStage.IsPartOfPrefabContents(gameObject);
+    }
+#endif
+
+----
+
+These new Editor APIs are located in the `UnityEditor.SceneManagement`
+namespace, so we'll need to add this to our conditionally-compiled `using`
+statements as well:
+
+[source,csharp]
+----
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif UNITY_EDITOR
+
+----
+
+Now, let's use this `IsPrefab` method to check if we're in the full stage for a
+prefab in `Update`:
+
+[source,csharp]
+----
+// Inside the CustomGUID class
+
+#if UNITY_EDITOR
+    private void Update()
+    {
+        if (!Application.IsPlaying(gameObject))
+        {
+            SerializedObject serializedObject = new SerializedObject(this);
+
+            SerializedProperty guidProperty = serializedObject.FindProperty(nameof(guid));
+
+            if (IsPrefab())
+            {
+                guidProperty.stringValue = null;
+            }
+            else if (String.IsNullOrEmpty(guidProperty.stringValue) ||
+                     (guidProperty.isInstantiatedPrefab &&!guidProperty.prefabOverride))
+            {
+                guidProperty.stringValue = NewGuid();
+            }
+
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+#endif
+
+----
 
 == Further Reading
