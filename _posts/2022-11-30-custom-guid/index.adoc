@@ -173,8 +173,10 @@ the game.
 
 == Editor APIs: SerializedProperty and SerializedObject
 
-We need the editor APIs to properly modify our GUID field from the editor, even
-if the script is attached to prefab.
+We need the Editor APIs to properly modify our GUID field from the editor
+(especially if the script is attached to a prefab asset).
+
+But before we look at the Editor APIs, let's first look at our `guid` field.
 
 === Script Usage: String Field For GUID
 
@@ -202,6 +204,9 @@ storing them as strings for a few reasons:
    does support strings.
 2. By directly serializing strings, we can easily view the GUIDs in the editor
    itself, seeing the typical hexadecimal representation for a GUID.
+
+From here on, if I refer to the GUID of a GameObject, I mean the `guid` field
+of a `CustomGUID` script that has been attached to that GameObject.
 
 === A Naive (and Somewhat Buggy) Approach
 
@@ -232,18 +237,21 @@ public class CustomGUID : MonoBehaviour
 When simply assigning to GameObjects or duplicating them, this code will assign
 GUIDs properly.
 
-=== Bug: Prefabs
-
 However, when this CustomGUID script is attached to a prefab, an annoying bug
-will appear: the script will be unable to properly read from the `guid` field.
+will appear: the script will be unable to properly read from and write to the
+`guid` field.
 
-That is, when attached to a prefab, the script will always consider the `guid`
-to initially be `null`, even if the prefab is actually storing a valid GUID in
-the field. This makes it difficult to detect when we should generate a new GUID
-(we'll discuss the exact algorithm for this later).
+That is, when attached to a prefab asset, the script will always consider the
+`guid` to initially be `null`, even if the prefab is actually storing a valid
+GUID in the field. This makes it difficult to detect when we should generate a
+new GUID (we'll discuss the exact algorithm for this later).
 
-To solve this problem, we will use parts of the Unity API that are
-normally seen in custom editors: the
+Additionally, this approach will fail to write to a script's field in a prefab
+asset. Even though it would seem like values have been assigned to these fields,
+those values would not persist in the prefab asset itself.
+
+To solve these problems, we will use parts of the Unity API that are normally
+seen in custom editors: the
 https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedObject.html[SerializedObject]
 and
 https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedProperty.html[SerializedProperty]
@@ -257,7 +265,7 @@ editor itself. When used, they will automatically support key editor
 functionality like undo and prefab overrides.
 
 For our use case, we're more interested in the fact that these classes avoid the
-prefab field-reading bug mentioned earlier.
+prefab-related bugs mentioned earlier.
 
 // The `SerializedObject` and `SerializedProperty` APIs are a little clunky, so
 // we'll 
@@ -289,7 +297,7 @@ to a `SerializedProperty`.
 
 The `SerializedProperty` class allows us to actually modify an object's field.
 However, in order to obtain it, we first need to create a `SerializedObject`
-(which is why I introduced a `SerializedObject` first).
+(which is why I described `SerializedObject` first).
 
 While using this part of the Editor API, we need to follow these 4 broad steps
 to modify an object's field:
@@ -300,8 +308,8 @@ to modify an object's field:
 3. Tell the `SerializedProperty` that you want to change the relevant field.
 4. Finalize your changes via the `SerializedObject`.
 
-The following example code will show how to set a GUID via this part of the
-Editor API:
+The following example code will show how to set our `guid` field via these parts
+of the Editor API:
 
 [source,csharp]
 ----
@@ -344,11 +352,13 @@ necessary for us to modify a field.
 There are two potentially problematic details here:
 
 1. On lines 18/19, we obtain a SerializedProperty by searching for a field with
-   the name `"guid"`. This may lead to bugs if we ever change the name of this
-   field (which we will address later in this post).
-2. On line 2, we have to use `using UnityEditor` statement, otherwise we won't
-   have access to our 2 classes from the Editor API. This will lead to problems
-   when making builds of our game (as we will shortly discuss).
+   the name `"guid"` (via a string argument to a method). This may lead to bugs if
+   we ever change the name of this field (which we will address
+   <<nameof-expression, later in this post>>).
+2. As seen on line 2, we have to write a `using UnityEditor` statement,
+   otherwise we won't have access to `SerializedObject` and `SerializedProperty`
+   from the Editor API. This will lead to problems when making builds of our
+   game (as we will shortly discuss).
 
 === Problem: We Can't Build!
 
@@ -382,7 +392,7 @@ game is running.
    `guid` field from the editor itself.
 
 With this in mind, we can make a key conclusion: we only need the Editor APIs
-while in the editor itself.
+while in the Unity editor itself.
 
 == C# Preprocessor Directives
 
@@ -428,7 +438,7 @@ This technique is called
 https://docs.unity3d.com/2021.3/Documentation/Manual/PlatformDependentCompilation.html[conditional ]
 https://en.wikipedia.org/wiki/Conditional_compilation[compilation],
 as it only compiles parts of the code when certain conditions are
-true (like being in the Unity Editor or not).
+true (like being in the Unity editor or not).
 
 [#script-usage-preprocessor]
 === Script Usage: C# Preprocessor Directives
@@ -471,8 +481,8 @@ public class CustomGUID : MonoBehaviour
 }
 ----
 
-There are 2 blocks of code that we conditionally compile, since both of them
-involve the Editor APIs:
+There are currently 2 blocks of code that we conditionally compile, since both
+of them involve the Editor APIs:
 
 1. The `using UnityEditor` statement.
 2. The `Awake` method.
@@ -480,27 +490,32 @@ involve the Editor APIs:
 When we're in our editor, both of these sections of code will compile, ensuring
 that our script can assign different GUID values as necessary.
 
-When making a final build, however, both of sections of code will be ignored,
+When making a final build, however, both sections of code will be ignored,
 leaving our script with no references to `UnityEditor` or anything in that
-namespace. This will allow us to successfully create a final build.
+namespace. This will allow us to successfully create a final build. This final
+build will still have access to the `guid` field, as it is not surrouded by
+preprocessor directives.
 
+[#nameof-expression]
 == The nameof Expression
 
 As we <<editor-api-problems, mentioned earlier>>, we have to obtain a
 SerializedProperty by searching for a field with the name `"guid"`. If we were
 to change the name of our field (e.g. from `"guid"` to `"id"`), then we would
-need to change the argument passed to `serializedObject.FindProperty()` as well.
+need to change the argument passed to the `SerializedObject.FindProperty` method
+as well.
 
 Fortunately, we can automatically obtain the name of our `guid` field using a
-https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/nameof[feature
-of C#] called the `nameof` expression.
+feature of C# called the
+https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/nameof[`nameof`
+expression].
 
 As its name would imply, this expression allows us to obtain the name of a
 variable, type, or field as a string constant.
 
 === Script Usage: nameof
 
-Let's use this feature in our script:
+Since this feature is rather simple, let's use just use it in our script:
 
 [source,csharp]
 ----
@@ -538,15 +553,16 @@ public class CustomGUID : MonoBehaviour
 ----
 
 Compared to our <<script-usage-preprocessor, previous example>>, we've only
-changed one line: line 20.
+changed one line: line 21.
 
-Specifically, changed our use of `"guid"` to `nameof(guid)`. This will have the
-same functionality while being more robust.
+Specifically, we changed our argument from the strong literal `"guid"` to the
+expression `nameof(guid)`. This will have the same functionality while being
+more robust.
 
-If we were to rename the `guid` field (perhaps to `id`) in our IDE, then our IDE
-would automatically use the new name on line 20 for us. By using this feature,
-we no longer need to worry about changing the argument to
-`serializedObject.FindProperty()`.
+If we were to rename the `guid` field (perhaps to `id`) in an IDE like Rider,
+then our IDE would automatically use the new name on line 20 for us. By using
+this feature, we no longer need to worry about changing the argument to
+`SerializedObject.FindProperty`.
 
 [#stop-constant-change]
 == Stop Constantly Changing GUIDs
@@ -558,14 +574,15 @@ we assign a new GUID to each GameObject every time we load a scene
 There are a few annoying issues with this approach:
 
 - Whenever leaving a scene, the Unity editor will ask if we want to save, even
-  if it doesn't seem like we've changed anything (as the GUIDs of the
+  if it doesn't seem like we've changed anything (as the GUIDs of our
   GameObjects will have changed).
 - Our commits in git will constantly show scenes and prefabs being changed, even
   if we didn't apparently modify them (as the GUIDs of their GameObjects will
   have changed upon opening them).
 
-To solve these issue, we'll use a different approach entirely: we'll only modify
-a GameObject's GUID as necessary.
+To solve these issues, we'll use a different approach entirely: we'll only
+modify a GameObject's GUID as necessary. We will begin by showing how this
+approach handles the duplication of GameObjects.
 
 == Handling Duplication
 
@@ -575,9 +592,9 @@ ensure that the GUID is different when a GameObject is duplicated.
 Normally, when a GameObject is duplicated, all of the fields in its attached
 scripts are duplicated as well.
 
-However, we want the `guid` in field in our `CustomGUID` script GameObject to
-*not* be duplicated (as this stores our GameObject's GUID). How can we achieve
-this?
+However, we want the `guid` field in the `CustomGUID` script of a GameObject
+to *not* be duplicated (as this stores our GameObject's GUID). How can we
+achieve this?
 
 Ideally, we would want to run code to generate a new GUID whenever the
 GameObject is duplicated. Unfortunately, Unity doesn't provide any direct ways
@@ -628,10 +645,11 @@ current GUID is a duplicate:
 ----
 
 Though this approach will correctly prevent duplicate GameObjects from having
-the same GUIDs, it has a potential performance problem. As each `CustomGUID`
-will have to check all of our `CustomGUID` scripts. This will have a run time of
-O(n^2^), which will be abysmal with large numbers of `CustomGUID` scripts (i.e.
-large numbers of GameObjects with `CustomGUID` scripts attached).
+the same GUIDs, it has a potential performance problem. Since each `CustomGUID`
+will have to check all of our `CustomGUID` scripts, this section of code will
+have a run time of O(n^2^), which will be abysmal with large numbers of
+`CustomGUID` scripts (i.e. large numbers of GameObjects with `CustomGUID`
+scripts attached).
 
 Perhaps due to the speed of modern computers (and the fact that this code is in
 `Awake` rather than `Update`), this performance is fine when you have dozens and
@@ -642,23 +660,23 @@ the gaming laptop I used for testing.
 To solve this performance problem, you can cache the GUIDs that have been used
 so far. Using a Dictionary or a
 https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1?view=net-7.0[HashSet]
-in a static variable for this cache will allow you to achieve rapid look-ups,
-allowing you to avoid linearly iterating through all CustomGUIDs from every
-CustomGUID.
+in a static variable for this cache will allow you to achieve rapid look-ups and
+avoid redundant insertions.
 
-This post is primarily focused on the core ideas and features used to set up
-persistent GUIDs in Unity, and the underlying approach to handling duplication
-is the same. So I won't go into too much detail regarding this optimization. The
-approach used here is optimized enough to see examples in use.
+I won't go into too much detail regarding this optimization, as this post is
+primarily focused on the core techniques and features I used to set up
+persistent GUIDs in Unity. The underlying approach is the same regardless of
+whether or not you cache currently-used GUIDs, and the code shown here is
+optimized enough for use as an explanatory example.
 
 == Handling New GameObjects
 
-When first attaching a `CustomGUID` script to a GameObject, we need to assign a
-GUID.
+When first attaching a `CustomGUID` script to a GameObject, we (perhaps
+obviously) need to give it a GUID.
 
 To avoid having a new GUID every time we load the scene, we'll use `null` as the
-default value for our `guid` field (`null` is the default value for a string
-field) and then initialize `guid` if it has not been initialized before:
+default value for our `guid` field (`null` is already the default value for a
+string field) and then initialize `guid` if it has not been initialized before:
 
 [source,csharp]
 ----
@@ -687,7 +705,7 @@ field) and then initialize `guid` if it has not been initialized before:
 ----
 
 Additionally, since we're now generating GUIDs in more than one place, let's
-refactor that code into its own little method:
+refactor that GUID-generation code into its own little method:
 
 [source,csharp]
 ----
@@ -703,9 +721,10 @@ It's fine for us to place this code in Update, since checking the GUID every
 time something in the scene changes is cheap--cheap enough to be negligible.
 
 In the `Update` method, we reuse many of the same features we saw before: Editor
-APIS (`SerializedObject` and `SerializedProperty`), the `nameof` expression, and
-part of what `ExecuteAttribute` offers (`Application.IsPlaying`). Since we're
-familiar with these features already, our functionality is fairly straightforward.
+APIs (`SerializedObject` and `SerializedProperty`), the `nameof` expression, and
+functionality related to `ExecuteAttribute` (`Application.IsPlaying`). Since
+we're familiar with these features already, our functionality is fairly
+straightforward.
 
 The only particularly new detail is the use of `String.IsNullOrEmpty`. This is
 just a little utility function from
@@ -716,8 +735,9 @@ Checking for an empty string is useful for debugging purposes, as it allows us
 to force new GUIDs to be generated from the editor. Simply by clearing the
 `guid` field from the Inspector window, we can force this script to generate a
 new GUID. This benefit is also only possible in the `Update` method. If we were
-to check for null or empty in the `Awake` method, we wouldn't see an instant
-response.
+to check for `null` or empty in the `Awake` method, then we wouldn't see an
+instant response, as we would have to wait until the `Awake` method is next
+called (probably the next time we leave and re-open the scene).
 
 [#handling-prefab-instances]
 == Handling Prefab Instances
@@ -729,7 +749,7 @@ Fortunately, the Editor APIs provide a fairly straightforward way to accomplish
 this:
 
 - The `SerializedProperty.isInstantiatedPrefab` property tells us if our
-  property is part of a script which is attached to a prefab instance?
+  property is part of a script which is attached to a prefab instance.
 - The `SerializedProperty.prefabOverride` property tells us if the property has
   been modified from the property's value in its parent prefab (assuming that
   the property is attached to a prefab instance).
@@ -766,26 +786,30 @@ same as the GUID of its prefab:
 
 ----
 
-By checking the negation of `guidProperty.prefabOverride` specifically, we can
-check if our `guid` field is the same as in our prefab.
+Our changes can be seen on line 14, with the addition of new conditions to our
+`if` statement.
 
-Using this, this code directly checks if our script is part of a prefab instance
-and if our `guid` field is the same as the original prefab. If so, it generates
-and assigns a new GUID.
+By checking the negation of `guidProperty.prefabOverride` specifically, we can
+check if the `guid` field in our prefab instance is the same as in our original
+prefab asset.
+
+Using this fact, this code directly checks if our script is part of a prefab
+instance and if our `guid` field is the same as the original prefab asset. If
+so, it generates and assigns a new GUID.
 
 == Handling Prefabs (EditorAPIs)
 
 Ideally, we want the GUID of a prefab itself to be null, to prevent us from
-saving/loading information on a prefab when we mean to be saving/loading
+saving/loading information for a prefab when we mean to be saving/loading
 information for its instances.
 
 That is, if we ever accidentally access the GUID of a prefab (while intending to
 access the GUID of one of its instances), we want a glaring `null` value to show
 us that we're doing something wrong.
 
-Conceptually, we want to execute some code whenever we create a new prefab.
+Ideally, we would want to execute some code whenever we create a new prefab.
 Unfortunately, as far as I can tell, Unity does not offer any way for us to do
-this directly.
+this.
 
 As a result, I've adopted this approach: set the `guid` field for a CustomGUID
 script to `null` as soon as we've detected that it's attached to a prefab asset.
@@ -795,8 +819,8 @@ There are two places in the Unity editor where we might modify a prefab:
 
 1. While we have a scene open, and we are only previewing the prefab (viewing
    the prefab solely in the inspector).
-2. When we have the prefab opened fully, in its own, special scene which exists
-   just to exit that prefab.
+2. When we have the prefab opened fully, in its own special scene which exists
+   just to edit that prefab.
 
 To detect whether or not a `CustomGUID` script (or any other script) is attached
 to a prefab asset, we have to detect both of these cases.
@@ -806,19 +830,19 @@ to a prefab asset, we have to detect both of these cases.
 Despite my best efforts, I was only able to detect the second case, when we have
 the prefab fully opened in its own special scene.
 
-To check this, I used the `PrefabStage` and `PrefabStageUtility` classes, which
-are part of the editor API.
+To accomplish this, I used the `PrefabStage` and `PrefabStageUtility` classes,
+which are part of the editor API.
 
 - A `PrefabStage` represents a special, prefab-specific scene that allows us to
-  edit all of the scenes of a prefab. In the editor, we reach this scene by
-  double-clicking on a prefab.
+  edit all of the scenes of a prefab. In the editor, we normally reach this
+  scene by double-clicking on a prefab.
 - `PrefabStageUtility` contains multiple utility methods, one of which allows us
   to check if we're currently in a special prefab scene.
 
 === Script Usage: PrefabStage and PrefabStageUtility
 
 Let's create a method which will check if our script is attached to a Prefab
-asset (while in special prefab scene):
+asset (while in a special prefab scene):
 
 [source,csharp]
 ----
@@ -837,8 +861,7 @@ asset (while in special prefab scene):
 ----
 
 These new Editor APIs are located in the `UnityEditor.SceneManagement`
-namespace, so we'll need to add this to our conditionally-compiled `using`
-statements as well:
+namespace, so we'll need to add a new conditionally-compiled `using` statement:
 
 [source,csharp]
 ----
@@ -882,15 +905,15 @@ Now, let's use this `IsPrefab` method in our `Update` method:
 
 ----
 
-The major changes here come on lines 13 and 14, where we check if we're in a
-full prefab scene and set the GUID to `null` accordingly.
+The major changes here come on lines 13-16, where we check if we're in a full
+prefab scene and set the GUID to `null` accordingly.
 
 It's important that line 17 be an `else if` rather than another `if` statement,
 otherwise we'll end up generating a new GUID immediately after setting our field
 to `null`.
 
-Now, whenever we fully open a prefab, the Unity editor will automatically set
-its GUID to be `null`.
+Now, whenever we fully open a prefab in the Unity editor, its GUID will be
+automatically set to `null`.
 
 === What About Prefab Previews?
 
