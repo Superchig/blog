@@ -716,7 +716,8 @@ Checking for an empty string is useful for debugging purposes, as it allows us
 to force new GUIDs to be generated from the editor. Simply by clearing the
 `guid` field from the Inspector window, we can force this script to generate a
 new GUID. This benefit is also only possible in the `Update` method. If we were
-to place this check in the `Awake` method, we wouldn't see an instant response.
+to check for null or empty in the `Awake` method, we wouldn't see an instant
+response.
 
 == PrefabStageUtility
 
