@@ -549,7 +549,7 @@ we no longer need to worry about changing the argument to
 `serializedObject.FindProperty()`.
 
 [#stop-constant-change]
-== Stop Constantly Changing GUIDs Handling Duplication
+== Stop Constantly Changing GUIDs
 
 Up to this point, you may have noticed a possible quirk in our implementation:
 we assign a new GUID to each GameObject every time we load a scene
@@ -719,6 +719,7 @@ new GUID. This benefit is also only possible in the `Update` method. If we were
 to check for null or empty in the `Awake` method, we wouldn't see an instant
 response.
 
+[#handling-prefab-instances]
 == Handling Prefab Instances
 
 We want to ensure that the GUID of our prefab is different from the GUID of any
@@ -782,6 +783,14 @@ That is, if we ever accidentally access the GUID of a prefab (while intending to
 access the GUID of one of its instances), we want a glaring `null` value to show
 us that we're doing something wrong.
 
+Conceptually, we want to execute some code whenever we create a new prefab.
+Unfortunately, as far as I can tell, Unity does not offer any way for us to do
+this directly.
+
+As a result, I've adopted this approach: set the `guid` field for a CustomGUID
+script to `null` as soon as we've detected that it's attached to a prefab asset.
+
+[#two-prefab-cases]
 There are two places in the Unity editor where we might modify a prefab:
 
 1. While we have a scene open, and we are only previewing the prefab (viewing
@@ -790,7 +799,7 @@ There are two places in the Unity editor where we might modify a prefab:
    just to exit that prefab.
 
 To detect whether or not a `CustomGUID` script (or any other script) is attached
-to a prefab, we have to detect both of these cases.
+to a prefab asset, we have to detect both of these cases.
 
 === PrefabStage and PrefabStageUtility
 
@@ -808,7 +817,8 @@ are part of the editor API.
 
 === Script Usage: PrefabStage and PrefabStageUtility
 
-Let's create a method which will check if we're a prefab scene:
+Let's create a method which will check if our script is attached to a Prefab
+asset (while in special prefab scene):
 
 [source,csharp]
 ----
@@ -839,8 +849,7 @@ using UnityEditor.SceneManagement;
 
 ----
 
-Now, let's use this `IsPrefab` method to check if we're in the full stage for a
-prefab in `Update`:
+Now, let's use this `IsPrefab` method in our `Update` method:
 
 [source,csharp]
 ----
@@ -853,7 +862,8 @@ prefab in `Update`:
         {
             SerializedObject serializedObject = new SerializedObject(this);
 
-            SerializedProperty guidProperty = serializedObject.FindProperty(nameof(guid));
+            SerializedProperty guidProperty =
+                serializedObject.FindProperty(nameof(guid));
 
             if (IsPrefab())
             {
@@ -872,4 +882,33 @@ prefab in `Update`:
 
 ----
 
-== Further Reading
+The major changes here come on lines 13 and 14, where we check if we're in a
+full prefab scene and set the GUID to `null` accordingly.
+
+It's important that line 17 be an `else if` rather than another `if` statement,
+otherwise we'll end up generating a new GUID immediately after setting our field
+to `null`.
+
+Now, whenever we fully open a prefab, the Unity editor will automatically set
+its GUID to be `null`.
+
+=== What About Prefab Previews?
+
+As I alluded to earlier, I never managed to detect the first prefab case (which
+is when we have a normal scene open in the editor and a prefab previewed in the
+Inspector window).
+
+Though this is not ideal, it's still acceptable, and the script is still usable.
+Even if we never open a prefab fully and the prefab continues to have a
+non-`null` GUID, our changes from the <<handling-prefab-instances>> section will
+prevent us from facing any bugs outright.
+
+In the future, as I continue to use this script, I may discover how to handle
+this case.
+
+== Full Script
+
+link:/assets/2022-11-30-custom-guid/CustomGUID.cs[Download here] for the full script.
+
+Hopefully, this post helps you understand how this script operates, in case you
+ever want to modify it.
