@@ -931,7 +931,8 @@ this case.
 
 == Full Script
 
-link:/assets/2022-11-30-custom-guid/CustomGUID.cs[Download here] for the full script.
+https://github.com/Superchig/CustomGuidExample/blob/main/Assets/Scripts/CustomGUID.cs[Download
+here] for the full script.
 
 Hopefully, this post helps you understand how this script operates, in case you
 ever want to modify it.
