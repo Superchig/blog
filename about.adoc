@@ -4,10 +4,12 @@
 
 == Hello!
 
-I’m Christopher Chang, an undergraduate Software Engineering student at
-Chapman University. You can find me on
-https://github.com/Superchig[Github]. If you want to contact me, you can
-write an email to chiggiechang@gmail.com.
+I’m Christopher Chang, a professional and hobbyist programmer. I currently work
+as a Support Engineer and Hedgeye Risk Management. Opinions expressed are
+solely my own and do not express the views or opinions of my employer.
+
+You can find me on https://github.com/Superchig[Github]. If you want to contact
+me, you can write an email to chiggiechang@gmail.com.
 
 This blog's theme and Jekyll setup are courtesy of the brilliant
 https://matklad.github.io/[matklad].
