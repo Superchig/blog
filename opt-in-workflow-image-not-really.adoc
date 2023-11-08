@@ -1,0 +1,11 @@
+= About
+:layout: default
+:page-permalink: /opt-in-workflow-image-not-really/
+
+== Opt-In Workflow Image (Not Really)
+
+I don't really have an opt-in workflow image URL.
+
+My opt-in workflow consists of me asking my family if they want to receive texts regarding their finances.
+
+The number of family members I send texts to is limited, and I get their consent verbally.
