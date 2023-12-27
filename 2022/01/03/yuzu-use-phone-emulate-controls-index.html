@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Yuzu: Using a phone to emulate motion controls</title>
+  <meta name="description"
+    content="Emulating Switch games but can&#8217;t get your Joy-Cons to connect to yourcomputer? Without other such controllers, you might be unable to usemotion controls.">
+  <link rel="canonical" href="https://superchig.com/2022/01/03/yuzu-use-phone-emulate-controls-">
+  <link rel="alternate" type="application/rss+xml" title="superchig" href="https://superchig.com/feed.xml">
+
+  <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Regular.woff2') format('woff2');
+    }
+
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Bold.woff2') format('woff2');
+      ;
+      font-weight: bold;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      margin-block-start: 0;
+      margin-block-end: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-weight: 300;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 80ch;
+      padding-left: 2ch;
+      padding-right: 2ch;
+    }
+
+    .site-header {
+      width: 100%;
+      max-width: 80ch;
+    }
+
+    .site-header>nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .site-header .-title {
+      flex-grow: 2;
+    }
+
+    .site-footer {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      width: 100%;
+      max-width: 80ch;
+      margin-top: 1rem;
+      height: 2rem;
+      padding-left: 1ch;
+      padding-right: 1ch;
+    }
+  </style>
+  <link rel="stylesheet" href=" /css/adoc.css">
+  <link rel="stylesheet" href=" /css/rouge-github.css">
+  <link rel="stylesheet" href=" /css/main.css">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400italic,700,700italic%7COpen+Sans:300">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <nav>
+      <a class="-title" href="/">superchig</a>
+      
+      
+      <a href="/about/">About</a>
+      
+      
+      
+      
+      
+      <a href="/opt-in-workflow-image-not-really/">Twilio</a>
+      
+      
+      
+      
+      
+      
+      <a href="/portfolio">Portfolio</a>
+    </nav>
+  </header>
+
+  <main>
+    <article>
+  <h1>Yuzu: Using a phone to emulate motion controls</h1>
+  <div class="post-meta sect1">Jan 3, 2022</div>
+  <div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Emulating Switch games but can&#8217;t get your Joy-Cons to connect to your
+computer? Without other such controllers, you might be unable to use
+motion controls.</p>
+</div>
+<div class="paragraph">
+<p>Fortunately, if you&#8217;re using <a href="https://yuzu-emu.org/">Yuzu</a>, you can use
+your phone to handle motion controls. In my experience, this is somewhat
+janky but relatively usable.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="1-download-and-run-webgyroforcemuhook"><a class="anchor" href="#1-download-and-run-webgyroforcemuhook"></a>1. Download and run WebGyroForCemuhook</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://github.com/hjmmc/WebGyroForCemuhook">WebGyroForCemuhook</a> uses
+ondevicemotion data to provide the gyroscopic data for a UDP-based,
+Cemuhook-compatible motion server.</p>
+</div>
+<div class="paragraph">
+<p>The README for this project already provides instructions on how to
+download run it, but I&#8217;ll describe how to use it anyways.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;re on Windows, WebGyroForCemuhook provides a <code>Gyro.exe</code>
+executable for you to use.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;re running Linux (as I am), you can install Node.js and use that
+to run the project.</p>
+</div>
+<div class="paragraph">
+<p>After installing Node.js, the following commands should work:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="code"><pre>git clone https://github.com/hjmmc/WebGyroForCemuhook
+<span class="nb">cd </span>WebGyroForCemuhook
+npm <span class="nb">install
+</span>npm start
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now that you have WebGyroForCemuhook running, you need to connect your
+phone to the project&#8217;s browser front-end. You can do this by pointing
+your phone&#8217;s browser to <a href="https://your-pc-ip-ip.xip.lhjmmc.cn:8443" class="bare">https://your-pc-ip-ip.xip.lhjmmc.cn:8443</a> (for
+example, <a href="https://192-168-1-100.xip.lhjmmc.cn:8443" class="bare">https://192-168-1-100.xip.lhjmmc.cn:8443</a>).</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;re using an iPhone and have iOS 13+, you may need to click an
+"allow permission" button to use the phone&#8217;s gyroscope.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="2-test-the-cemuhook-server-on-yuzu"><a class="anchor" href="#2-test-the-cemuhook-server-on-yuzu"></a>2. Test the Cemuhook server on Yuzu</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To test if WebGyroForCemuhook&#8217;s UDP server is working properly, go to
+<code>Emulation &gt; Configure &gt; Controls</code> and then click the <code>Configure</code> button
+under <code>Motion</code>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="/assets/2022-01-03-yuzu-use-phone-emulate-controls/motion-configure.png" alt="motion configure"></span></p>
+</div>
+<div class="paragraph">
+<p>From here, you can click the <code>Test</code> button without adding any additonal
+servers, as the pre-existing server address and port is used by default
+in WebGyroForCemuhook.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="/assets/2022-01-03-yuzu-use-phone-emulate-controls/test-button.png" alt="test button"></span></p>
+</div>
+<div class="paragraph">
+<p>If the server is working correctly, then you should see a pop-up window
+saying "Successfully received data from the server."</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="/assets/2022-01-03-yuzu-use-phone-emulate-controls/successful-data.png" alt="successful data"></span></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="3-enable-the-motion-controls-on-yuzu"><a class="anchor" href="#3-enable-the-motion-controls-on-yuzu"></a>3. Enable the motion controls on Yuzu</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that Yuzu is able to receive input from the UDP server, it might
+seem like our work is done. However, we still need to configure the
+controls to actually use the gyroscopic info from the UDP server.</p>
+</div>
+<div class="paragraph">
+<p>To do this, click on the "[not set]" controls button for your relevant
+motion. For the Pro Controller, this would be the button for <code>Motion 1</code>.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="/assets/2022-01-03-yuzu-use-phone-emulate-controls/motion-configure.png" alt="motion configure"></span></p>
+</div>
+<div class="paragraph">
+<p>The button&#8217;s text should change to say something like "Shake!".</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="/assets/2022-01-03-yuzu-use-phone-emulate-controls/shake.png" alt="shake"></span></p>
+</div>
+<div class="paragraph">
+<p>While the button&#8217;s text says "Shake!", you should then shake your phone.
+If everything works correctly, the button should now read "cemuhookudp"
+or something similar.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="/assets/2022-01-03-yuzu-use-phone-emulate-controls/cemuhook.png" alt="cemuhook"></span></p>
+</div>
+<div class="paragraph">
+<p>At this point, you should be ready to use your phone for motion
+controls.</p>
+</div>
+</div>
+</div>
+</article>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      <a href="https://github.com/Superchig/superchig.github.io/edit/main/_posts/2022-01-03-yuzu-use-phone-emulate-controls/index.adoc">
+        <i class="fa fa-edit"></i> fix typo
+      </a>
+
+      <a href=" /feed.xml">
+        <i class="fa fa-rss"></i> rss
+      </a>
+
+      <a href="https://github.com/Superchig">
+        <i class="fa fa-github"></i> superchig
+      </a>
+    </p>
+  </footer>
+</body>
+
+</html>

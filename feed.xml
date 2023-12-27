@@ -1,0 +1,2211 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.9.1">Jekyll</generator><link href="https://superchig.com/feed.xml" rel="self" type="application/atom+xml" /><link href="https://superchig.com/" rel="alternate" type="text/html" /><updated>2023-12-27T21:00:54+00:00</updated><id>https://superchig.com/feed.xml</id><title type="html">superchig</title><subtitle>A programming blog by Christopher Chang, based off of matklad's excellent blog.
+</subtitle><author><name>Christopher Chang</name></author><entry><title type="html">Custom GUIDs in Unity</title><link href="https://superchig.com/2022/11/30/custom-guid-index.html" rel="alternate" type="text/html" title="Custom GUIDs in Unity" /><published>2022-11-30T00:00:00+00:00</published><updated>2022-11-30T00:00:00+00:00</updated><id>https://superchig.com/2022/11/30/custom-guid/index</id><content type="html" xml:base="https://superchig.com/2022/11/30/custom-guid-index.html">&lt;div id=&quot;toc&quot; class=&quot;toc&quot;&gt;
+&lt;div id=&quot;toctitle&quot;&gt;Table of Contents&lt;/div&gt;
+&lt;ul class=&quot;sectlevel1&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#introduction&quot;&gt;Introduction&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#the-problem&quot;&gt;The Problem&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#guids&quot;&gt;GUIDs&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#the-executealways-attribute&quot;&gt;The ExecuteAlways Attribute&lt;/a&gt;
+&lt;ul class=&quot;sectlevel2&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#example-executealways&quot;&gt;Example: ExecuteAlways&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#start-awake-and-update&quot;&gt;Start, Awake, and Update&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#script-usage-executealways&quot;&gt;Script Usage: ExecuteAlways&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#editor-apis-serializedproperty-and-serializedobject&quot;&gt;Editor APIs: SerializedProperty and SerializedObject&lt;/a&gt;
+&lt;ul class=&quot;sectlevel2&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#script-usage-string-field-for-guid&quot;&gt;Script Usage: String Field For GUID&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#a-naive-and-somewhat-buggy-approach&quot;&gt;A Naive (and Somewhat Buggy) Approach&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#why-use-serializedobject-and-serializedproperty&quot;&gt;Why Use SerializedObject and SerializedProperty?&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#editor-api-serializedobject&quot;&gt;Editor API: SerializedObject&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#editor-api-serializedproperty&quot;&gt;Editor API: SerializedProperty&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#problem-we-cant-build&quot;&gt;Problem: We Can&amp;#8217;t Build!&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#c-preprocessor-directives&quot;&gt;C# Preprocessor Directives&lt;/a&gt;
+&lt;ul class=&quot;sectlevel2&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#example-c-preprocessor-directives&quot;&gt;Example: C# Preprocessor Directives&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#script-usage-preprocessor&quot;&gt;Script Usage: C# Preprocessor Directives&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#nameof-expression&quot;&gt;The nameof Expression&lt;/a&gt;
+&lt;ul class=&quot;sectlevel2&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#script-usage-nameof&quot;&gt;Script Usage: nameof&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#stop-constant-change&quot;&gt;Stop Constantly Changing GUIDs&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#handling-duplication&quot;&gt;Handling Duplication&lt;/a&gt;
+&lt;ul class=&quot;sectlevel2&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#script-usage-handling-duplication&quot;&gt;Script Usage: Handling Duplication&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#handling-new-gameobjects&quot;&gt;Handling New GameObjects&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#handling-prefab-instances&quot;&gt;Handling Prefab Instances&lt;/a&gt;
+&lt;ul class=&quot;sectlevel2&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#script-usage-isinstantiatedprefab-and-prefaboverride&quot;&gt;Script Usage: isInstantiatedPrefab and prefabOverride&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#handling-prefabs-editorapis&quot;&gt;Handling Prefabs (EditorAPIs)&lt;/a&gt;
+&lt;ul class=&quot;sectlevel2&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;#prefabstage-and-prefabstageutility&quot;&gt;PrefabStage and PrefabStageUtility&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#script-usage-prefabstage-and-prefabstageutility&quot;&gt;Script Usage: PrefabStage and PrefabStageUtility&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#what-about-prefab-previews&quot;&gt;What About Prefab Previews?&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;#full-script&quot;&gt;Full Script&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;introduction&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#introduction&quot;&gt;&lt;/a&gt;Introduction&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you&amp;#8217;ve ever tried to save data for many entities in a video game, you&amp;#8217;ve
+probably come across an approach that looks like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Associate each entity with a persistent, unique ID.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Create a key-value store (like a Python dictionary), using these IDs as keys
+and records with the relevant data for each entity as values.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Write the key-value store to disk / read the key-value store from disk as
+necessary.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s possible to go into significantly more detail for each of these steps, but
+this article will focus primarily on the first one: assigning persistent, unique
+IDs.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;the-problem&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#the-problem&quot;&gt;&lt;/a&gt;The Problem&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Specifically, this article will explain how to create a MonoBehaviour script
+which, when attached to a GameObject, will assign it a unique ID that persists
+between different play sessions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With a script like this, you would want these IDs to be unique even in the
+following situations:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;A developer duplicates a GameObject (in the editor).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;A developer converts a GameObject into a prefab (in the editor).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;A developer instantiates a prefab (in the editor).&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If a normal MonoBehaviour script were attached to the GameObject in any of these
+cases, then the fields on that script would be duplicated along with the
+GameObject.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You would have GameObjects with the same IDs as their prefabs, or duplicate
+GameObjects with identical IDs. This would make it impossible to save/load data
+for individual GameObjects.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;guids&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#guids&quot;&gt;&lt;/a&gt;GUIDs&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;First of all, let&amp;#8217;s settle what a GUID is. In short, a GUID (also known as a
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Universally_unique_identifier&quot;&gt;UUID&lt;/a&gt;) is a 128-bit
+data structure that represents a globally unique ID.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As the name of this article implies, we&amp;#8217;ll be using GUIDs as our IDs in this
+article.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Specifically, we&amp;#8217;ll be (automatically) creating these GUIDs in the editor, so
+that the specific GUID value for each GameObject is part of its scene. This will
+keep these GUIDs the same every time the player plays the game.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Unity already uses GUIDs to refer to different assets in the editor (and you can
+actually see them in use if you look into the .meta or .asset files in a Unity
+project).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s worth nothing that Unity already creates unique IDs to refer to each
+GameObject. However, these IDs will change between
+&lt;a href=&quot;https://docs.unity3d.com/ScriptReference/Object.GetInstanceID.html&quot;&gt;player
+runtime and Editor sessions&lt;/a&gt;, making them useless for the purposes of
+saving/loading data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;the-executealways-attribute&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#the-executealways-attribute&quot;&gt;&lt;/a&gt;The ExecuteAlways Attribute&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In Unity, our C# scripts typically run during a player&amp;#8217;s runtime session.
+That is, they execute code either when we play the game in the editor or when
+the player is running an actual build.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Since we&amp;#8217;re creating GUIDs in the editor, we&amp;#8217;ll need to execute some code in the
+editor itself. That is, we&amp;#8217;ll want the script to execute before we even start
+the game, as we create prefabs or instantiate GameObjects while in the editor.
+To achieve this, we&amp;#8217;ll use
+&lt;a href=&quot;https://docs.unity3d.com/ScriptReference/ExecuteAlways.html&quot;&gt;the &lt;code&gt;ExecuteAlways&lt;/code&gt;
+attribute&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s worth noting that there is an
+&lt;a href=&quot;https://docs.unity3d.com/2021.3/Documentation/ScriptReference/ExecuteInEditMode.html&quot;&gt;older
+and similar attribute called &lt;code&gt;ExecuteInEditMode&lt;/code&gt;&lt;/a&gt;, which has been deprecated.
+Annoyingly, this deprecation warning only shows up in the middle of its
+documentation (at least for Unity version 2021.3).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;example-executealways&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#example-executealways&quot;&gt;&lt;/a&gt;Example: ExecuteAlways&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The syntax for the ExecuteAlways attribute is fairly straightforward. This
+example is taken from Unity&amp;#8217;s documentation for the attribute:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;UnityEngine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAlways&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;ExampleClass&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MonoBehaviour&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// Play logic&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// Editor logic&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As seen on line 3, this class has been marked with &lt;code&gt;ExecuteAlways&lt;/code&gt;. As a result,
+it now has the ability to execute code at both runtime and in the editor itself.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To execute different code between runtime and the editor, we can use the
+&lt;code&gt;Application.IsPlaying&lt;/code&gt; method, passing the script&amp;#8217;s own GameObject as an
+argument. This method will return true if we&amp;#8217;re in a play session, and it will
+return false if we&amp;#8217;re only in the editor.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;start-awake-and-update&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#start-awake-and-update&quot;&gt;&lt;/a&gt;Start, Awake, and Update&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With a normal script, the &lt;code&gt;Start&lt;/code&gt;, &lt;code&gt;Awake&lt;/code&gt;, &lt;code&gt;Update&lt;/code&gt; methods execute when the scene is
+loaded and every frame, respectively. Both of these methods only run during a
+play session. With the &lt;code&gt;ExecuteAlways&lt;/code&gt; attribute, these methods will execute
+in the editor as well as during a play session. Specifically:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;In the editor, &lt;code&gt;Start&lt;/code&gt; will execute when a script is first attached to a
+GameObject and when the scene is loaded.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;In the editor, &lt;code&gt;Awake&lt;/code&gt; behaves similarly to &lt;code&gt;Start&lt;/code&gt;, except that it is
+executed first and it will execute even if the script component is disabled.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;In the editor, &lt;code&gt;Update&lt;/code&gt; will be called whenever something in the scene is
+changed.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll be using the &lt;code&gt;Awake&lt;/code&gt; and &lt;code&gt;Update&lt;/code&gt; methods in our script. Though we could
+conceptually do everything in &lt;code&gt;Update&lt;/code&gt;, we&amp;#8217;ll use &lt;code&gt;Awake&lt;/code&gt; to perform
+particularly expensive operations as a performance optimization.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;script-usage-executealways&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#script-usage-executealways&quot;&gt;&lt;/a&gt;Script Usage: ExecuteAlways&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s start our actual script, using these features:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Using statements...&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAlways&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CustomGUID&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MonoBehavior&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Awake&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// Only in editor&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// Only in editor&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this script, both our &lt;code&gt;Awake&lt;/code&gt; and our &lt;code&gt;Update&lt;/code&gt; methods will only execute code
+in the editor. They won&amp;#8217;t execute any code when the player is actually playing
+the game.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;editor-apis-serializedproperty-and-serializedobject&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#editor-apis-serializedproperty-and-serializedobject&quot;&gt;&lt;/a&gt;Editor APIs: SerializedProperty and SerializedObject&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We need the Editor APIs to properly modify our GUID field from the editor
+(especially if the script is attached to a prefab asset).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;But before we look at the Editor APIs, let&amp;#8217;s first look at our &lt;code&gt;guid&lt;/code&gt; field.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;script-usage-string-field-for-guid&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#script-usage-string-field-for-guid&quot;&gt;&lt;/a&gt;Script Usage: String Field For GUID&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll store our GUIDs as strings, via a field:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Using statements...&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAlways&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CustomGUID&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MonoBehaviour&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Awake and Update methods...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Though &lt;code&gt;Guid&lt;/code&gt; already exists as a part of
+&lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.guid?view=net-7.0&quot;&gt;C#'s
+standard library&lt;/a&gt; (and we&amp;#8217;ll be using this type to generate our GUIDs), we&amp;#8217;ll be
+storing them as strings for a few reasons:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Unity&amp;#8217;s built-in serialization doesn&amp;#8217;t directly support &lt;code&gt;Guid&lt;/code&gt; fields, but it
+does support strings.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;By directly serializing strings, we can easily view the GUIDs in the editor
+itself, seeing the typical hexadecimal representation for a GUID.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;From here on, if I refer to the GUID of a GameObject, I mean the &lt;code&gt;guid&lt;/code&gt; field
+of a &lt;code&gt;CustomGUID&lt;/code&gt; script that has been attached to that GameObject.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;a-naive-and-somewhat-buggy-approach&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#a-naive-and-somewhat-buggy-approach&quot;&gt;&lt;/a&gt;A Naive (and Somewhat Buggy) Approach&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Under normal circumstances, you would update this &lt;code&gt;guid&lt;/code&gt; field by simply
+assigning to it:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Using statements...&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAlways&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CustomGUID&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MonoBehaviour&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Awake&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// Assign a new GUID as necessary&lt;/span&gt;
+	    &lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Update method not implemented...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When simply assigning to GameObjects or duplicating them, this code will assign
+GUIDs properly.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However, when this CustomGUID script is attached to a prefab, an annoying bug
+will appear: the script will be unable to properly read from and write to the
+&lt;code&gt;guid&lt;/code&gt; field.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That is, when attached to a prefab asset, the script will always consider the
+&lt;code&gt;guid&lt;/code&gt; to initially be &lt;code&gt;null&lt;/code&gt;, even if the prefab is actually storing a valid
+GUID in the field. This makes it difficult to detect when we should generate a
+new GUID (we&amp;#8217;ll discuss the exact algorithm for this later).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Additionally, this approach will fail to write to a script&amp;#8217;s field in a prefab
+asset. Even though it would seem like values have been assigned to these fields,
+those values would not persist in the prefab asset itself.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To solve these problems, we will use parts of the Unity API that are normally
+seen in custom editors: the
+&lt;a href=&quot;https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedObject.html&quot;&gt;SerializedObject&lt;/a&gt;
+and
+&lt;a href=&quot;https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedProperty.html&quot;&gt;SerializedProperty&lt;/a&gt;
+classes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;why-use-serializedobject-and-serializedproperty&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#why-use-serializedobject-and-serializedproperty&quot;&gt;&lt;/a&gt;Why Use SerializedObject and SerializedProperty?&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In short, &lt;code&gt;SerializedObject&lt;/code&gt; and &lt;code&gt;SerializedProperty&lt;/code&gt; are how you&amp;#8217;re supposed to
+modify the fields of a MonoBehavior script when executing code in the Unity
+editor itself. When used, they will automatically support key editor
+functionality like undo and prefab overrides.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For our use case, we&amp;#8217;re more interested in the fact that these classes avoid the
+prefab-related bugs mentioned earlier.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;editor-api-serializedobject&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#editor-api-serializedobject&quot;&gt;&lt;/a&gt;Editor API: SerializedObject&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As its name might imply, &lt;code&gt;SerializedObject&lt;/code&gt; represents an object and will
+indirectly allow us to modify the fields in this object. Specifically, it
+represents an object that descends from the &lt;code&gt;Object&lt;/code&gt; class
+&lt;a href=&quot;https://docs.unity3d.com/2021.3/Documentation/ScriptReference/Object.html&quot;&gt;provided
+by Unity&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s worth noting that C# also provides an &lt;code&gt;Object&lt;/code&gt; class, and that
+&lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.object?view=net-7.0&quot;&gt;all
+classes in C# inherit from this class&lt;/a&gt;. Somewhat confusingly, this &lt;code&gt;Object&lt;/code&gt;
+class is &lt;strong&gt;not&lt;/strong&gt; the &lt;code&gt;Object&lt;/code&gt; class provided by Unity.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Both GameObjects and MonoBehavior scripts descend from Unity&amp;#8217;s &lt;code&gt;Object&lt;/code&gt; class,
+so we&amp;#8217;ll be able to use &lt;code&gt;SerializedObject&lt;/code&gt; to represent the script that we want
+to modify.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Concretely speaking, we&amp;#8217;ll only directly use a &lt;code&gt;SerializedObject&lt;/code&gt; to gain access
+to a &lt;code&gt;SerializedProperty&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;editor-api-serializedproperty&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#editor-api-serializedproperty&quot;&gt;&lt;/a&gt;Editor API: SerializedProperty&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;code&gt;SerializedProperty&lt;/code&gt; class allows us to actually modify an object&amp;#8217;s field.
+However, in order to obtain it, we first need to create a &lt;code&gt;SerializedObject&lt;/code&gt;
+(which is why I described &lt;code&gt;SerializedObject&lt;/code&gt; first).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;While using this part of the Editor API, we need to follow these 4 broad steps
+to modify an object&amp;#8217;s field:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Obtain a &lt;code&gt;SerializedObject&lt;/code&gt; that represents our MonoBehavior script.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Obtain a &lt;code&gt;SerializedProperty&lt;/code&gt; from the &lt;code&gt;SerializedObject&lt;/code&gt; that represents a
+specific field.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Tell the &lt;code&gt;SerializedProperty&lt;/code&gt; that you want to change the relevant field.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Finalize your changes via the &lt;code&gt;SerializedObject&lt;/code&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The following example code will show how to set our &lt;code&gt;guid&lt;/code&gt; field via these parts
+of the Editor API:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Other using statements...&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;UnityEditor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAlways&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CustomGUID&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MonoBehaviour&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Awake&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// For now, always assign a new GUID&lt;/span&gt;
+
+            &lt;span class=&quot;c1&quot;&gt;// Step 1&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;SerializedObject&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SerializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;c1&quot;&gt;// Step 2&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;SerializedProperty&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FindProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;guid&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;c1&quot;&gt;// Step 3&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+            &lt;span class=&quot;c1&quot;&gt;// Step 4&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ApplyModifiedProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;c1&quot;&gt;// Update method not implemented...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The 4 statements in our &lt;code&gt;Awake&lt;/code&gt; method shown above correspond to the 4 steps
+necessary for us to modify a field.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;editor-api-problems&quot; class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are two potentially problematic details here:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;On lines 18/19, we obtain a SerializedProperty by searching for a field with
+the name &lt;code&gt;&quot;guid&quot;&lt;/code&gt; (via a string argument to a method). This may lead to bugs if
+we ever change the name of this field (which we will address
+&lt;a href=&quot;#nameof-expression&quot;&gt;later in this post&lt;/a&gt;).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;As seen on line 2, we have to write a &lt;code&gt;using UnityEditor&lt;/code&gt; statement,
+otherwise we won&amp;#8217;t have access to &lt;code&gt;SerializedObject&lt;/code&gt; and &lt;code&gt;SerializedProperty&lt;/code&gt;
+from the Editor API. This will lead to problems when making builds of our
+game (as we will shortly discuss).&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;problem-we-cant-build&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#problem-we-cant-build&quot;&gt;&lt;/a&gt;Problem: We Can&amp;#8217;t Build!&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you tried to build a project that uses &lt;code&gt;SerializedObject&lt;/code&gt; and
+&lt;code&gt;SerializedProperty&lt;/code&gt; in a MonoBehavior script (as we demonstrated above), you
+would run into an annoying problem: the project would fail to build entirely.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our problem most directly originates with our use of the &lt;code&gt;UnityEditor&lt;/code&gt;
+namespace. We need this namespace to access &lt;code&gt;SerializedObject&lt;/code&gt; and
+&lt;code&gt;SerializedProperty&lt;/code&gt;, but, as stated in its
+&lt;a href=&quot;https://docs.unity3d.com/2021.3/Documentation/ScriptReference/UnityEditor.html&quot;&gt;documentation&lt;/a&gt;,
+we can&amp;#8217;t reference this namespace in scripts that are compiled for a
+final build.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;APIs in &lt;code&gt;UnityEditor&lt;/code&gt; are typically used in when writing custom Editors in
+Unity. In our case, we&amp;#8217;re not doing this. Instead, we&amp;#8217;re using these APIs in a
+MonoBehavior script that has been annotated with the &lt;code&gt;ExecuteAlways&lt;/code&gt; attribute.
+As with normal MonoBehavior scripts, our script will be compiled when making a
+build.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Here&amp;#8217;s a key insight: even though our &lt;code&gt;CustomGUID&lt;/code&gt; script will be compiled for a
+user-facing build, only part of its functionality needs to be available when the
+game is running.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;In the game itself: we need access to the GUID for each relevant GameObject.
+This does not require any of the Editor APIs. This essentially just requires
+the &lt;code&gt;guid&lt;/code&gt; field.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;In the editor: we need to ensure that the GUIDs attached to GameObjects are
+unique, even when a GameObject is duplicated or instantiated from a prefab.
+This will require the Editor APIs, so that we can properly assign to the
+&lt;code&gt;guid&lt;/code&gt; field from the editor itself.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With this in mind, we can make a key conclusion: we only need the Editor APIs
+while in the Unity editor itself.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;c-preprocessor-directives&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#c-preprocessor-directives&quot;&gt;&lt;/a&gt;C# Preprocessor Directives&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In order to make our project build properly, we&amp;#8217;ll be using something called
+&lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/preprocessor-directives&quot;&gt;C#
+preprocessor directives&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With this feature of C# (and its integration with Unity), we can avoid compiling
+the editor-specific part of our script in player-facing builds.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;example-c-preprocessor-directives&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#example-c-preprocessor-directives&quot;&gt;&lt;/a&gt;Example: C# Preprocessor Directives&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s look at a brief of example of the relevant syntax:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Debug&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Hello, editor!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the example above, the &lt;code&gt;#if UNITY_EDITOR&lt;/code&gt; and &lt;code&gt;#endif&lt;/code&gt; lines are preprocessor
+directives&lt;sup class=&quot;footnote&quot;&gt;[&lt;a id=&quot;_footnoteref_1&quot; class=&quot;footnote&quot; href=&quot;#_footnotedef_1&quot; title=&quot;View footnote.&quot;&gt;1&lt;/a&gt;]&lt;/sup&gt;. With these directives, the &lt;code&gt;Debug.Log(&quot;Hello,
+editor!&quot;)&lt;/code&gt; line will only compile within the editor itself. When we make a full
+build for the game, this line (and everything between these two directives)
+won&amp;#8217;t be compiled at all. From the compiler&amp;#8217;s point of view, it&amp;#8217;ll be as if
+these lines simply aren&amp;#8217;t in our source code.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This technique is called
+&lt;a href=&quot;https://docs.unity3d.com/2021.3/Documentation/Manual/PlatformDependentCompilation.html&quot;&gt;conditional &lt;/a&gt;
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Conditional_compilation&quot;&gt;compilation&lt;/a&gt;,
+as it only compiles parts of the code when certain conditions are
+true (like being in the Unity editor or not).&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;script-usage-preprocessor&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#script-usage-preprocessor&quot;&gt;&lt;/a&gt;Script Usage: C# Preprocessor Directives&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that we have an understanding of the syntax, let&amp;#8217;s use C# preprocessor
+directives in our script itself:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Other using statements...&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;UnityEditor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAlways&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CustomGUID&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MonoBehaviour&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Awake&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// For now, always assign a new GUID&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedObject&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SerializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedProperty&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FindProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;guid&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ApplyModifiedProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Update method not implemented...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are currently 2 blocks of code that we conditionally compile, since both
+of them involve the Editor APIs:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;The &lt;code&gt;using UnityEditor&lt;/code&gt; statement.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The &lt;code&gt;Awake&lt;/code&gt; method.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When we&amp;#8217;re in our editor, both of these sections of code will compile, ensuring
+that our script can assign different GUID values as necessary.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When making a final build, however, both sections of code will be ignored,
+leaving our script with no references to &lt;code&gt;UnityEditor&lt;/code&gt; or anything in that
+namespace. This will allow us to successfully create a final build. This final
+build will still have access to the &lt;code&gt;guid&lt;/code&gt; field, as it is not surrouded by
+preprocessor directives.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;nameof-expression&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#nameof-expression&quot;&gt;&lt;/a&gt;The nameof Expression&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As we &lt;a href=&quot;#editor-api-problems&quot;&gt;mentioned earlier&lt;/a&gt;, we have to obtain a
+SerializedProperty by searching for a field with the name &lt;code&gt;&quot;guid&quot;&lt;/code&gt;. If we were
+to change the name of our field (e.g. from &lt;code&gt;&quot;guid&quot;&lt;/code&gt; to &lt;code&gt;&quot;id&quot;&lt;/code&gt;), then we would
+need to change the argument passed to the &lt;code&gt;SerializedObject.FindProperty&lt;/code&gt; method
+as well.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Fortunately, we can automatically obtain the name of our &lt;code&gt;guid&lt;/code&gt; field using a
+feature of C# called the
+&lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/nameof&quot;&gt;&lt;code&gt;nameof&lt;/code&gt;
+expression&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As its name would imply, this expression allows us to obtain the name of a
+variable, type, or field as a string constant.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;script-usage-nameof&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#script-usage-nameof&quot;&gt;&lt;/a&gt;Script Usage: nameof&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Since this feature is rather simple, let&amp;#8217;s use just use it in our script:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Other using statements...&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;UnityEditor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ExecuteAlways&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;CustomGUID&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;MonoBehaviour&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Awake&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;c1&quot;&gt;// For now, always assign a new GUID&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedObject&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SerializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedProperty&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FindProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ApplyModifiedProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// Update method not implemented...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Compared to our &lt;a href=&quot;#script-usage-preprocessor&quot;&gt;previous example&lt;/a&gt;, we&amp;#8217;ve only
+changed one line: line 21.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Specifically, we changed our argument from the strong literal &lt;code&gt;&quot;guid&quot;&lt;/code&gt; to the
+expression &lt;code&gt;nameof(guid)&lt;/code&gt;. This will have the same functionality while being
+more robust.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If we were to rename the &lt;code&gt;guid&lt;/code&gt; field (perhaps to &lt;code&gt;id&lt;/code&gt;) in an IDE like Rider,
+then our IDE would automatically use the new name on line 20 for us. By using
+this feature, we no longer need to worry about changing the argument to
+&lt;code&gt;SerializedObject.FindProperty&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;stop-constant-change&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#stop-constant-change&quot;&gt;&lt;/a&gt;Stop Constantly Changing GUIDs&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Up to this point, you may have noticed a possible quirk in our implementation:
+we assign a new GUID to each GameObject every time we load a scene
+(or fully open up a prefab).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are a few annoying issues with this approach:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Whenever leaving a scene, the Unity editor will ask if we want to save, even
+if it doesn&amp;#8217;t seem like we&amp;#8217;ve changed anything (as the GUIDs of our
+GameObjects will have changed).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Our commits in git will constantly show scenes and prefabs being changed, even
+if we didn&amp;#8217;t apparently modify them (as the GUIDs of their GameObjects will
+have changed upon opening them).&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To solve these issues, we&amp;#8217;ll use a different approach entirely: we&amp;#8217;ll only
+modify a GameObject&amp;#8217;s GUID as necessary. We will begin by showing how this
+approach handles the duplication of GameObjects.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;handling-duplication&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#handling-duplication&quot;&gt;&lt;/a&gt;Handling Duplication&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As we mentioned &lt;a href=&quot;#the-problem&quot;&gt;near the beginning of this post&lt;/a&gt;, we need to
+ensure that the GUID is different when a GameObject is duplicated.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Normally, when a GameObject is duplicated, all of the fields in its attached
+scripts are duplicated as well.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However, we want the &lt;code&gt;guid&lt;/code&gt; field in the &lt;code&gt;CustomGUID&lt;/code&gt; script of a GameObject
+to &lt;strong&gt;not&lt;/strong&gt; be duplicated (as this stores our GameObject&amp;#8217;s GUID). How can we
+achieve this?&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Ideally, we would want to run code to generate a new GUID whenever the
+GameObject is duplicated. Unfortunately, Unity doesn&amp;#8217;t provide any direct ways
+to achieve this.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://answers.unity.com/questions/483434/how-to-call-a-method-when-a-gameobject-has-been-du.html&quot;&gt;This
+forum post&lt;/a&gt; seems to describe an indirect way to do this, but the approach shown
+there will also run code when a scene is first entered, so it&amp;#8217;s not viable for
+our use case. (If we generated a new GUID whenever we entered a scene, then our
+GameObjects would change GUIDs constantly, leaving us with the annoying issues
+&lt;a href=&quot;#stop-constant-change&quot;&gt;from earlier&lt;/a&gt;.)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;script-usage-handling-duplication&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#script-usage-handling-duplication&quot;&gt;&lt;/a&gt;Script Usage: Handling Duplication&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Since we can&amp;#8217;t run code specifically when a GameObject is being duplicated,
+we&amp;#8217;ll simply have each &lt;code&gt;CustomGUID&lt;/code&gt; script check the other GUIDs to see if our
+current GUID is a duplicate:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Just the Awake method is shown here&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Awake&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;SerializedObject&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SerializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedProperty&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FindProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+            &lt;span class=&quot;c1&quot;&gt;// Potential performance problem, but fine for dozens of GameObjects&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;CustomGUID&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;customGuids&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;FindObjectsOfType&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CustomGUID&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;foreach&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CustomGUID&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;customGuid&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;customGuids&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;customGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;customGuid&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ApplyModifiedProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Though this approach will correctly prevent duplicate GameObjects from having
+the same GUIDs, it has a potential performance problem. Since each &lt;code&gt;CustomGUID&lt;/code&gt;
+will have to check all of our &lt;code&gt;CustomGUID&lt;/code&gt; scripts, this section of code will
+have a run time of O(n&lt;sup&gt;2&lt;/sup&gt;), which will be abysmal with large numbers of
+&lt;code&gt;CustomGUID&lt;/code&gt; scripts (i.e. large numbers of GameObjects with &lt;code&gt;CustomGUID&lt;/code&gt;
+scripts attached).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Perhaps due to the speed of modern computers (and the fact that this code is in
+&lt;code&gt;Awake&lt;/code&gt; rather than &lt;code&gt;Update&lt;/code&gt;), this performance is fine when you have dozens and
+dozens of GameObjects in your scene. However, as you approach hundreds of
+GameObjects, the performance problems become significantly worse, at least on
+the gaming laptop I used for testing.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To solve this performance problem, you can cache the GUIDs that have been used
+so far. Using a Dictionary or a
+&lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1?view=net-7.0&quot;&gt;HashSet&lt;/a&gt;
+in a static variable for this cache will allow you to achieve rapid look-ups and
+avoid redundant insertions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I won&amp;#8217;t go into too much detail regarding this optimization, as this post is
+primarily focused on the core techniques and features I used to set up
+persistent GUIDs in Unity. The underlying approach is the same regardless of
+whether or not you cache currently-used GUIDs, and the code shown here is
+optimized enough for use as an explanatory example.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;handling-new-gameobjects&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#handling-new-gameobjects&quot;&gt;&lt;/a&gt;Handling New GameObjects&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When first attaching a &lt;code&gt;CustomGUID&lt;/code&gt; script to a GameObject, we (perhaps
+obviously) need to give it a GUID.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To avoid having a new GUID every time we load the scene, we&amp;#8217;ll use &lt;code&gt;null&lt;/code&gt; as the
+default value for our &lt;code&gt;guid&lt;/code&gt; field (&lt;code&gt;null&lt;/code&gt; is already the default value for a
+string field) and then initialize &lt;code&gt;guid&lt;/code&gt; if it has not been initialized before:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Inside the CustomGUID class&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;SerializedObject&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SerializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedProperty&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FindProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsNullOrEmpty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ApplyModifiedProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Additionally, since we&amp;#8217;re now generating GUIDs in more than one place, let&amp;#8217;s
+refactor that GUID-generation code into its own little method:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;    &lt;span class=&quot;c1&quot;&gt;// Inside the CustomGUID class&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ToString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s fine for us to place this code in Update, since checking the GUID every
+time something in the scene changes is cheap&amp;#8212;&amp;#8203;cheap enough to be negligible.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the &lt;code&gt;Update&lt;/code&gt; method, we reuse many of the same features we saw before: Editor
+APIs (&lt;code&gt;SerializedObject&lt;/code&gt; and &lt;code&gt;SerializedProperty&lt;/code&gt;), the &lt;code&gt;nameof&lt;/code&gt; expression, and
+functionality related to &lt;code&gt;ExecuteAttribute&lt;/code&gt; (&lt;code&gt;Application.IsPlaying&lt;/code&gt;). Since
+we&amp;#8217;re familiar with these features already, our functionality is fairly
+straightforward.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The only particularly new detail is the use of &lt;code&gt;String.IsNullOrEmpty&lt;/code&gt;. This is
+just a little utility function from
+&lt;a href=&quot;https://learn.microsoft.com/en-us/dotnet/api/system.string.isnullorempty?view=net-7.0&quot;&gt;C#'s
+standard library&lt;/a&gt; which checks if a string is &lt;code&gt;null&lt;/code&gt; or empty.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Checking for an empty string is useful for debugging purposes, as it allows us
+to force new GUIDs to be generated from the editor. Simply by clearing the
+&lt;code&gt;guid&lt;/code&gt; field from the Inspector window, we can force this script to generate a
+new GUID. This benefit is also only possible in the &lt;code&gt;Update&lt;/code&gt; method. If we were
+to check for &lt;code&gt;null&lt;/code&gt; or empty in the &lt;code&gt;Awake&lt;/code&gt; method, then we wouldn&amp;#8217;t see an
+instant response, as we would have to wait until the &lt;code&gt;Awake&lt;/code&gt; method is next
+called (probably the next time we leave and re-open the scene).&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;handling-prefab-instances&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#handling-prefab-instances&quot;&gt;&lt;/a&gt;Handling Prefab Instances&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We want to ensure that the GUID of our prefab is different from the GUID of any
+of its instances.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Fortunately, the Editor APIs provide a fairly straightforward way to accomplish
+this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;The &lt;code&gt;SerializedProperty.isInstantiatedPrefab&lt;/code&gt; property tells us if our
+property is part of a script which is attached to a prefab instance.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The &lt;code&gt;SerializedProperty.prefabOverride&lt;/code&gt; property tells us if the property has
+been modified from the property&amp;#8217;s value in its parent prefab (assuming that
+the property is attached to a prefab instance).&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;script-usage-isinstantiatedprefab-and-prefaboverride&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#script-usage-isinstantiatedprefab-and-prefaboverride&quot;&gt;&lt;/a&gt;Script Usage: isInstantiatedPrefab and prefabOverride&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s use these 2 properties to check if the GUID of a prefab instance is the
+same as the GUID of its prefab:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Inside the CustomGUID class&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;SerializedObject&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SerializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedProperty&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FindProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsNullOrEmpty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;||&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isInstantiatedPrefab&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;prefabOverride&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ApplyModifiedProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our changes can be seen on line 14, with the addition of new conditions to our
+&lt;code&gt;if&lt;/code&gt; statement.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;By checking the negation of &lt;code&gt;guidProperty.prefabOverride&lt;/code&gt; specifically, we can
+check if the &lt;code&gt;guid&lt;/code&gt; field in our prefab instance is the same as in our original
+prefab asset.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Using this fact, this code directly checks if our script is part of a prefab
+instance and if our &lt;code&gt;guid&lt;/code&gt; field is the same as the original prefab asset. If
+so, it generates and assigns a new GUID.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;handling-prefabs-editorapis&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#handling-prefabs-editorapis&quot;&gt;&lt;/a&gt;Handling Prefabs (EditorAPIs)&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Ideally, we want the GUID of a prefab itself to be null, to prevent us from
+saving/loading information for a prefab when we mean to be saving/loading
+information for its instances.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That is, if we ever accidentally access the GUID of a prefab (while intending to
+access the GUID of one of its instances), we want a glaring &lt;code&gt;null&lt;/code&gt; value to show
+us that we&amp;#8217;re doing something wrong.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Ideally, we would want to execute some code whenever we create a new prefab.
+Unfortunately, as far as I can tell, Unity does not offer any way for us to do
+this.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As a result, I&amp;#8217;ve adopted this approach: set the &lt;code&gt;guid&lt;/code&gt; field for a CustomGUID
+script to &lt;code&gt;null&lt;/code&gt; as soon as we&amp;#8217;ve detected that it&amp;#8217;s attached to a prefab asset.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;two-prefab-cases&quot; class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are two places in the Unity editor where we might modify a prefab:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;While we have a scene open, and we are only previewing the prefab (viewing
+the prefab solely in the inspector).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;When we have the prefab opened fully, in its own special scene which exists
+just to edit that prefab.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To detect whether or not a &lt;code&gt;CustomGUID&lt;/code&gt; script (or any other script) is attached
+to a prefab asset, we have to detect both of these cases.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;prefabstage-and-prefabstageutility&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#prefabstage-and-prefabstageutility&quot;&gt;&lt;/a&gt;PrefabStage and PrefabStageUtility&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Despite my best efforts, I was only able to detect the second case, when we have
+the prefab fully opened in its own special scene.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To accomplish this, I used the &lt;code&gt;PrefabStage&lt;/code&gt; and &lt;code&gt;PrefabStageUtility&lt;/code&gt; classes,
+which are part of the editor API.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;A &lt;code&gt;PrefabStage&lt;/code&gt; represents a special, prefab-specific scene that allows us to
+edit all of the scenes of a prefab. In the editor, we normally reach this
+scene by double-clicking on a prefab.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;PrefabStageUtility&lt;/code&gt; contains multiple utility methods, one of which allows us
+to check if we&amp;#8217;re currently in a special prefab scene.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;script-usage-prefabstage-and-prefabstageutility&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#script-usage-prefabstage-and-prefabstageutility&quot;&gt;&lt;/a&gt;Script Usage: PrefabStage and PrefabStageUtility&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s create a method which will check if our script is attached to a Prefab
+asset (while in a special prefab scene):&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Inside the CustomGUID class&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;bool&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;IsPrefab&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;PrefabStage&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;currPrefabStage&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;PrefabStageUtility&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;GetCurrentPrefabStage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;currPrefabStage&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt;
+               &lt;span class=&quot;n&quot;&gt;currPrefabStage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPartOfPrefabContents&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These new Editor APIs are located in the &lt;code&gt;UnityEditor.SceneManagement&lt;/code&gt;
+namespace, so we&amp;#8217;ll need to add a new conditionally-compiled &lt;code&gt;using&lt;/code&gt; statement:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;UnityEditor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;UnityEditor.SceneManagement&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif UNITY_EDITOR
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, let&amp;#8217;s use this &lt;code&gt;IsPrefab&lt;/code&gt; method in our &lt;code&gt;Update&lt;/code&gt; method:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;csharp&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;c1&quot;&gt;// Inside the CustomGUID class&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;#if UNITY_EDITOR
+&lt;/span&gt;    &lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Update&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Application&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPlaying&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;gameObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;SerializedObject&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;SerializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;SerializedProperty&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;FindProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;nameof&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+
+            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsPrefab&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;IsNullOrEmpty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;||&lt;/span&gt;
+                     &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;isInstantiatedPrefab&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;!&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;prefabOverride&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;guidProperty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;stringValue&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;NewGuid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;serializedObject&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ApplyModifiedProperties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;#endif
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The major changes here come on lines 13-16, where we check if we&amp;#8217;re in a full
+prefab scene and set the GUID to &lt;code&gt;null&lt;/code&gt; accordingly.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s important that line 17 be an &lt;code&gt;else if&lt;/code&gt; rather than another &lt;code&gt;if&lt;/code&gt; statement,
+otherwise we&amp;#8217;ll end up generating a new GUID immediately after setting our field
+to &lt;code&gt;null&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, whenever we fully open a prefab in the Unity editor, its GUID will be
+automatically set to &lt;code&gt;null&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;what-about-prefab-previews&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#what-about-prefab-previews&quot;&gt;&lt;/a&gt;What About Prefab Previews?&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As I alluded to earlier, I never managed to detect the first prefab case (which
+is when we have a normal scene open in the editor and a prefab previewed in the
+Inspector window).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Though this is not ideal, it&amp;#8217;s still acceptable, and the script is still usable.
+Even if we never open a prefab fully and the prefab continues to have a
+non-&lt;code&gt;null&lt;/code&gt; GUID, our changes from the &lt;a href=&quot;#handling-prefab-instances&quot;&gt;Handling Prefab Instances&lt;/a&gt; section will
+prevent us from facing any bugs outright.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the future, as I continue to use this script, I may discover how to handle
+this case.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;full-script&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#full-script&quot;&gt;&lt;/a&gt;Full Script&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/Superchig/CustomGuidExample/blob/main/Assets/Scripts/CustomGUID.cs&quot;&gt;Download
+here&lt;/a&gt; for the full script.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hopefully, this post helps you understand how this script operates, in case you
+ever want to modify it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;footnotes&quot;&gt;
+&lt;hr&gt;
+&lt;div class=&quot;footnote&quot; id=&quot;_footnotedef_1&quot;&gt;
+&lt;a href=&quot;#_footnoteref_1&quot;&gt;1&lt;/a&gt;. These are called preprocessor directives because they are heavily inspired by a similar mechanism associated with the C programming language. When programming with C, the preprocessor performs &quot;dumb&quot; textual manipulation of the source code before the compiler actually parses and compiles anything into machine code. Traditionally, the preprocessor was a separate program entirely, being invoked by the compiler before anything else was done. &lt;br&gt; &lt;br&gt; In C#, the compiler doesn&amp;#8217;t use a separate preprocessor, but it does process each of these directives as if there were a separate program running before the rest of the compiler.
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name>Christopher Chang</name></author></entry><entry><title type="html">Rolf: User Input, Threads, and Channels</title><link href="https://superchig.com/2022/05/15/rolf-input-thread-index.html" rel="alternate" type="text/html" title="Rolf: User Input, Threads, and Channels" /><published>2022-05-15T00:00:00+00:00</published><updated>2022-05-15T00:00:00+00:00</updated><id>https://superchig.com/2022/05/15/rolf-input-thread/index</id><content type="html" xml:base="https://superchig.com/2022/05/15/rolf-input-thread-index.html">&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Assume that you’re writing a TUI application (like
+&lt;a href=&quot;https://github.com/Superchig/rolf&quot;&gt;&lt;code&gt;rolf&lt;/code&gt;&lt;/a&gt;) which does at least two
+things:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Respond to user input, and&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Load in incredibly large&lt;sup class=&quot;footnote&quot;&gt;[&lt;a id=&quot;_footnoteref_1&quot; class=&quot;footnote&quot; href=&quot;#_footnotedef_1&quot; title=&quot;View footnote.&quot;&gt;1&lt;/a&gt;]&lt;/sup&gt; images.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you’re working on a program like this, you might run into an annoying
+problem: users have to wait for images to load before they can do
+anything.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The solution to this problem is to asynchronously obtain user input.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Depending on your runtime (e.g.
+&lt;a href=&quot;https://thecodest.co/blog/asynchronous-and-single-threaded-javascript-meet-the-event-loop/&quot;&gt;nodejs&lt;/a&gt;),
+it’s possible to be both asynchronous and single-threaded.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However, for the purposes of &lt;code&gt;rolf&lt;/code&gt;, we used multiple threads to handle
+asynchronous input.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;architecture&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#architecture&quot;&gt;&lt;/a&gt;Architecture&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For the purposes of this post, let&amp;#8217;s say that there are 3 threads
+involved.&lt;sup class=&quot;footnote&quot;&gt;[&lt;a id=&quot;_footnoteref_2&quot; class=&quot;footnote&quot; href=&quot;#_footnotedef_2&quot; title=&quot;View footnote.&quot;&gt;2&lt;/a&gt;]&lt;/sup&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;span class=&quot;image&quot;&gt;&lt;img src=&quot;/assets/2022-05-15-rolf-input-thread/threads.png&quot; alt=&quot;threads&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As seen in the diagram above, we have a thread for:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Receiving user input,&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Decoding images,&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;And everything else (the Main thread)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You might also notice that the Input and Image Decoding threads only interact
+with the Main thread, sending data back and forth to each other.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The Input and Main threads will both run on &quot;infinite&quot; loops. The Input thread
+will wait for user input, sending it to the Main thread as necessary, and the
+Main thread will wait for either input data from the Input thread or decoded
+image data from the Image Decoding thread, processing this data as necessary.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Notably, we achieve all of this without polling, instead using channels to send
+data between threads.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our Main thread will simply be the initial thread of the program, and our two
+other threads will be started by the Main thread.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this post, we&amp;#8217;ll be looking at the relationship between the &lt;em&gt;Input thread&lt;/em&gt;
+and &lt;em&gt;Main thread&lt;/em&gt;. The Image Decoding thread is sophisticated enough to warrant
+a post of its own, which I may write in the future.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;channels&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#channels&quot;&gt;&lt;/a&gt;Channels&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Before starting the loops for either of the threads (in fact, before starting
+any additional threads beyond the Main one), we&amp;#8217;re going to create a few
+channels.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;tx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;to_input_tx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;from_main_rx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;sync_channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Here, we&amp;#8217;ve created two channels:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;One which we&amp;#8217;ll use for sending data to the Main thread,&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;And another which we&amp;#8217;ll use for sending data to the Input thread.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Since channels only send information in one direction, we need two channels if
+we want bidirectional communication between the Input thread and the Main
+thread. Why do we want bidirectional communication in the first place? We&amp;#8217;ll
+discuss that more later.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;From our point of view, each channel consists of a sender and a receiver.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;For the first channel, &lt;code&gt;tx&lt;/code&gt; will be our sender and &lt;code&gt;rx&lt;/code&gt; will be our receiver.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;For the second channel, &lt;code&gt;to_input_tx&lt;/code&gt; is our sender and &lt;code&gt;from_main_rx&lt;/code&gt; is our
+receiver.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Notably, we use a different function to create each of our channels. I&amp;#8217;m not
+sure if this is actually necessary, but this allows us to create
+asynchronous/infinitely buffered vs. synchronous/bounded channels. The
+distinction won&amp;#8217;t matter massively for the purposes of this blog post, but you
+can read more about it &lt;a href=&quot;https://doc.rust-lang.org/std/sync/mpsc/&quot;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;data-between-channels&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#data-between-channels&quot;&gt;&lt;/a&gt;Data Between Channels&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Before we actually use the channels to send data between threads, let&amp;#8217;s first
+establish the types of data that will be sent.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InputEvent&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;CrosstermEvent&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;crossterm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;usize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+    &lt;span class=&quot;c&quot;&gt;// Other events...&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;enum&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;InputRequest&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;RequestNumber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;usize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Quit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first enum we defined will be sent from the Input thread to the Main thread.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The second enum is sent from the Main thread to the Input thread. This implies
+that the Main thread must request input from the Input thread before the Input
+thread actually sends any input. This is the primary reason we have
+bidirectional communication between the Main and Input threads, and it allows us
+to avoid a potentially annoying bug.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;bug-too-many-inputs&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#bug-too-many-inputs&quot;&gt;&lt;/a&gt;Bug: Too Many Inputs&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In &lt;code&gt;rolf&lt;/code&gt;, there&amp;#8217;s a feature which allows the user to open up their current file
+in an external text editor of their choice (using the &lt;code&gt;EDITOR&lt;/code&gt; and &lt;code&gt;VISUAL&lt;/code&gt;
+environmental variables). Typical values of &lt;code&gt;EDITOR&lt;/code&gt; might be &lt;code&gt;nano&lt;/code&gt;, &lt;code&gt;vim&lt;/code&gt;, or
+&lt;code&gt;emacsclient&lt;/code&gt;. For this feature, the Main thread will block until the external
+text editor is closed.&lt;sup class=&quot;footnote&quot;&gt;[&lt;a id=&quot;_footnoteref_3&quot; class=&quot;footnote&quot; href=&quot;#_footnotedef_3&quot; title=&quot;View footnote.&quot;&gt;3&lt;/a&gt;]&lt;/sup&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now imagine if we didn&amp;#8217;t have the Main thread request input from the Input
+thread, instead making the Input thread send input through its
+infinitely-buffered channel as soon as it receive any from the user.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If we combine this channel setup with the external editor feature described
+above, we&amp;#8217;ll run into a curious problem: the Input thread may &quot;steal&quot;
+keypresses from the external editor.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Since the Input thread will just receive input and send it to the Main thread
+whenever it receives a keypress, it can occasionally continue receiving these
+inputs even if, say, &lt;code&gt;vim&lt;/code&gt; is being used to edit the current file. As a result,
+two annoying things will happen:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;These occasional inputs won&amp;#8217;t make it to &lt;code&gt;vim&lt;/code&gt;, resulting in the user being
+unsettled by the inconsistent (in)ability to provide input.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;These occasional inputs will be sent to the main thread, which will then
+process those inputs after the external editor is closed. This would also be
+disjarring for the user, as they would see apparent &quot;phantom inputs&quot; be
+rapidly processed after they finish editing.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;By making the Main Thread send requests for input to the Input thread, we can
+ensure that the Input thread only sends input to the Main thread when necessary.
+This prevents the above bug from happening entirely.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You might&amp;#8217;ve also noticed that both &lt;code&gt;InputRequest&lt;/code&gt; and &lt;code&gt;CrosstermEvent&lt;/code&gt; contain
+request numbers. These request numbers help the Main thread determine whether or
+not it should actually send a request for input, which is crucial for properly
+fixing this bug. We&amp;#8217;ll dive more into that later.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;starting-the-input-thread&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#starting-the-input-thread&quot;&gt;&lt;/a&gt;Starting the Input Thread&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that we have the channels and their data set up, it&amp;#8217;s time to start the
+input loop.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Specifically, we&amp;#8217;ll start the input loop in its own thread, the Input thread.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;crossterm_input_tx&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tx&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.clone&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+
+&lt;span class=&quot;nn&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;thread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;spawn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;move&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;||&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;loop&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;from_main_rx&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.recv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nf&quot;&gt;Ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;InputRequest&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;RequestNumber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;nf&quot;&gt;Ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;InputRequest&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Quit&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;nf&quot;&gt;Err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;panic!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Input thread: Lost connnection to main thread: {:?}&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;crossterm_event&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;read&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.expect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Unable to read crossterm event&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;crossterm_input_tx&lt;/span&gt;
+            &lt;span class=&quot;nf&quot;&gt;.send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;InputEvent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CrosstermEvent&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;crossterm_event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+            &lt;span class=&quot;nf&quot;&gt;.expect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Unable to send on channel&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Here, to satisfy the Rust borrow checker, we need to clone our sender before we
+use it in the actual thread. Since these channels are multi-producer,
+single-consumer, this is how we handle having more than one possible sender
+(producer) to the Main thread.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The rest of the thread is mostly what you&amp;#8217;d expect, with a bit of bookkeeping
+for request numbers and requests to quit the thread.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Notably, the Input thread keeps track of the request number of the most recent
+input request sent to it by the Main thread, and then it sends this number back
+to the Main thread alongside the actual input data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This implies the Main thread will be the only thread to modify request numbers
+at all. We&amp;#8217;ll see more about this in a bit.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;loop-in-the-main-thread&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#loop-in-the-main-thread&quot;&gt;&lt;/a&gt;Loop in the Main Thread&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As the name might indicate, the Main thread is where the real meat and bones of
+&lt;code&gt;rolf&lt;/code&gt; takes place. Since they can get fairly complex, we&amp;#8217;ll omit most of those
+details, only showing the parts that are relevant to managing concurrency.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;mut&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;mut&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;last_recv_req_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;c&quot;&gt;// Other initialization code...&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;loop&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;c&quot;&gt;// Main drawing code...&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;// Other stuff...&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;rx&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.try_recv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;nf&quot;&gt;Ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;nf&quot;&gt;Err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;TryRecvError&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Empty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;last_recv_req_count&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;to_input_tx&lt;/span&gt;
+                    &lt;span class=&quot;nf&quot;&gt;.send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nn&quot;&gt;InputRequest&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;RequestNumber&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                    &lt;span class=&quot;nf&quot;&gt;.expect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Unable to send to input thread&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+            &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;rx&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.recv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;.unwrap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;nf&quot;&gt;Err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;nd&quot;&gt;panic!&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Unable to obtain input event: {}&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;err&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;nn&quot;&gt;InputEvent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;::&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CrosstermEvent&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;last_recv_req_count&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;input_request_count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+            &lt;span class=&quot;c&quot;&gt;// Process input from user...&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;// Handle other events...&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As mentioned earlier, the Main thread handles updates request numbers and
+determines if it should send an input request.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When determining if we should send an input request, there are two key things to
+keep in mind:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;We should only ask for a keypress if there&amp;#8217;s no other input or data to process.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;We should only ask for a keypress if the Input thread has already responded to
+our last input request.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In practice, the first item means only asking for a keypress if there are no
+existing &lt;code&gt;InputEvent&lt;/code&gt; values in the channel to the main thread. This is
+precisely what lines &lt;code&gt;11&lt;/code&gt;-&lt;code&gt;24&lt;/code&gt; of the above code block are achieving.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To handle the second item, we need to keep track of two key things:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;The request number of the most recently sent input request
+(&lt;code&gt;input_request_count&lt;/code&gt;).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;And the request number associated with the last &lt;code&gt;CrosstermEvent&lt;/code&gt; received by
+the Main thread from the Input thread (&lt;code&gt;last_recv_req_count&lt;/code&gt;).&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;By comparing request numbers for equality, we can see which &lt;code&gt;CrosstermEvent&lt;/code&gt;
+values were prompted by which input requests. Thus, to see if the Input thread
+has already responded to our last input request, we can check if the
+&lt;code&gt;input_request_count&lt;/code&gt; number is equal to the &lt;code&gt;last_recv_req_count&lt;/code&gt; number.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;possible-bug-integer-overflow&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#possible-bug-integer-overflow&quot;&gt;&lt;/a&gt;Possible Bug: Integer Overflow&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You might&amp;#8217;ve noticed that we&amp;#8217;re just incrementing &lt;code&gt;input_request_count&lt;/code&gt; every
+time we make a new input request.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If we continue doing that for long enough, the value of &lt;code&gt;input_request_count&lt;/code&gt;
+will surpass the maximum value of a 64-bit unsigned integer, resulting in
+integer overflow.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There&amp;#8217;s a simple fix to this problem: wrapping the integer.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Before incrementing, check if &lt;code&gt;input_request_count&lt;/code&gt; is at the maximum value
+for its type.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;If it is, then set &lt;code&gt;input_request_count&lt;/code&gt; back to 0.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Otherwise, increment it as normal.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In practice, I haven&amp;#8217;t run into this bug yet (due to the incredibly high number
+of &lt;code&gt;CrosstermEvent&lt;/code&gt; values which would have to be sent to trigger it).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In
+&lt;a href=&quot;https://huonw.github.io/blog/2016/04/myths-and-legends-about-integer-overflow-in-rust/&quot;&gt;release
+builds&lt;/a&gt; with Rust, integers will wrap around using two&amp;#8217;s complement, so this
+bug won&amp;#8217;t really be visible. If I understand this correctly, two&amp;#8217;s complement
+wraparound will in effect achieve the wrapping algorithm I described above.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In debug builds, overflow will be checked at runtime, with the program panicking
+if overflow does occur. I probably won&amp;#8217;t ever use &lt;code&gt;rolf&lt;/code&gt; enough to trigger this
+bug in a debug build (or in any build, really).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Fortunately, if this does turn out to be an issue, the fix should be fairly
+simple.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;parting-thoughts&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#parting-thoughts&quot;&gt;&lt;/a&gt;Parting Thoughts&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It took me a crazy long time to figure out how to address the input &quot;stealing&quot;
+bug. Arguably, finding that bug (in addition to the asynchronous image loading
+problem) was one of the leading factors which led me to reshape the architecture
+of &lt;code&gt;rolf&lt;/code&gt; into what it is now.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you ever run into a similar problem, I hope this is useful to you!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;strong&gt;Note&lt;/strong&gt;: Have I made any typos? Am I blatantly wrong about something? Do
+you just have general feedback? I’m still a Rust novice (arguably a
+programming novice, in general), so feel free to email me at
+&lt;a href=&quot;mailto:chiggiechang@gmail.com&quot;&gt;&lt;code&gt;chiggiechang@gmail.com&lt;/code&gt;&lt;/a&gt;. But be polite,
+please!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;footnotes&quot;&gt;
+&lt;hr&gt;
+&lt;div class=&quot;footnote&quot; id=&quot;_footnotedef_1&quot;&gt;
+&lt;a href=&quot;#_footnoteref_1&quot;&gt;1&lt;/a&gt;. Rolf doesn&amp;#8217;t necessarily load insanely large images, but there can be a noticeable loading time. Going forward, we might want to use a &lt;a href=&quot;https://lib.rs/crates/mozjpeg&quot;&gt;faster JPEG decoder&lt;/a&gt;.
+&lt;/div&gt;
+&lt;div class=&quot;footnote&quot; id=&quot;_footnotedef_2&quot;&gt;
+&lt;a href=&quot;#_footnoteref_2&quot;&gt;2&lt;/a&gt;. &lt;code&gt;rolf&lt;/code&gt; actually uses more threads than the ones shown here, but they&amp;#8217;re not relevant to this post.
+&lt;/div&gt;
+&lt;div class=&quot;footnote&quot; id=&quot;_footnotedef_3&quot;&gt;
+&lt;a href=&quot;#_footnoteref_3&quot;&gt;3&lt;/a&gt;. Specifically, the Main thread will block until the child process spawned by it to open up the external editor is closed.
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name>Christopher Chang</name></author></entry><entry><title type="html">Yuzu: Using a phone to emulate motion controls</title><link href="https://superchig.com/2022/01/03/yuzu-use-phone-emulate-controls-index.html" rel="alternate" type="text/html" title="Yuzu: Using a phone to emulate motion controls" /><published>2022-01-03T00:00:00+00:00</published><updated>2022-01-03T00:00:00+00:00</updated><id>https://superchig.com/2022/01/03/yuzu-use-phone-emulate-controls/index</id><content type="html" xml:base="https://superchig.com/2022/01/03/yuzu-use-phone-emulate-controls-index.html">&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Emulating Switch games but can&amp;#8217;t get your Joy-Cons to connect to your
+computer? Without other such controllers, you might be unable to use
+motion controls.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Fortunately, if you&amp;#8217;re using &lt;a href=&quot;https://yuzu-emu.org/&quot;&gt;Yuzu&lt;/a&gt;, you can use
+your phone to handle motion controls. In my experience, this is somewhat
+janky but relatively usable.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;1-download-and-run-webgyroforcemuhook&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#1-download-and-run-webgyroforcemuhook&quot;&gt;&lt;/a&gt;1. Download and run WebGyroForCemuhook&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hjmmc/WebGyroForCemuhook&quot;&gt;WebGyroForCemuhook&lt;/a&gt; uses
+ondevicemotion data to provide the gyroscopic data for a UDP-based,
+Cemuhook-compatible motion server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The README for this project already provides instructions on how to
+download run it, but I&amp;#8217;ll describe how to use it anyways.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you&amp;#8217;re on Windows, WebGyroForCemuhook provides a &lt;code&gt;Gyro.exe&lt;/code&gt;
+executable for you to use.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you&amp;#8217;re running Linux (as I am), you can install Node.js and use that
+to run the project.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After installing Node.js, the following commands should work:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;rouge highlight&quot;&gt;&lt;code data-lang=&quot;bash&quot;&gt;&lt;table class=&quot;linenotable&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;linenos gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;git clone https://github.com/hjmmc/WebGyroForCemuhook
+&lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;WebGyroForCemuhook
+npm &lt;span class=&quot;nb&quot;&gt;install
+&lt;/span&gt;npm start
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that you have WebGyroForCemuhook running, you need to connect your
+phone to the project&amp;#8217;s browser front-end. You can do this by pointing
+your phone&amp;#8217;s browser to &lt;a href=&quot;https://your-pc-ip-ip.xip.lhjmmc.cn:8443&quot; class=&quot;bare&quot;&gt;https://your-pc-ip-ip.xip.lhjmmc.cn:8443&lt;/a&gt; (for
+example, &lt;a href=&quot;https://192-168-1-100.xip.lhjmmc.cn:8443&quot; class=&quot;bare&quot;&gt;https://192-168-1-100.xip.lhjmmc.cn:8443&lt;/a&gt;).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you&amp;#8217;re using an iPhone and have iOS 13+, you may need to click an
+&quot;allow permission&quot; button to use the phone&amp;#8217;s gyroscope.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;2-test-the-cemuhook-server-on-yuzu&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#2-test-the-cemuhook-server-on-yuzu&quot;&gt;&lt;/a&gt;2. Test the Cemuhook server on Yuzu&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To test if WebGyroForCemuhook&amp;#8217;s UDP server is working properly, go to
+&lt;code&gt;Emulation &amp;gt; Configure &amp;gt; Controls&lt;/code&gt; and then click the &lt;code&gt;Configure&lt;/code&gt; button
+under &lt;code&gt;Motion&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;span class=&quot;image&quot;&gt;&lt;img src=&quot;/assets/2022-01-03-yuzu-use-phone-emulate-controls/motion-configure.png&quot; alt=&quot;motion configure&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;From here, you can click the &lt;code&gt;Test&lt;/code&gt; button without adding any additonal
+servers, as the pre-existing server address and port is used by default
+in WebGyroForCemuhook.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;span class=&quot;image&quot;&gt;&lt;img src=&quot;/assets/2022-01-03-yuzu-use-phone-emulate-controls/test-button.png&quot; alt=&quot;test button&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If the server is working correctly, then you should see a pop-up window
+saying &quot;Successfully received data from the server.&quot;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;span class=&quot;image&quot;&gt;&lt;img src=&quot;/assets/2022-01-03-yuzu-use-phone-emulate-controls/successful-data.png&quot; alt=&quot;successful data&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;3-enable-the-motion-controls-on-yuzu&quot;&gt;&lt;a class=&quot;anchor&quot; href=&quot;#3-enable-the-motion-controls-on-yuzu&quot;&gt;&lt;/a&gt;3. Enable the motion controls on Yuzu&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that Yuzu is able to receive input from the UDP server, it might
+seem like our work is done. However, we still need to configure the
+controls to actually use the gyroscopic info from the UDP server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To do this, click on the &quot;[not set]&quot; controls button for your relevant
+motion. For the Pro Controller, this would be the button for &lt;code&gt;Motion 1&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;span class=&quot;image&quot;&gt;&lt;img src=&quot;/assets/2022-01-03-yuzu-use-phone-emulate-controls/motion-configure.png&quot; alt=&quot;motion configure&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The button&amp;#8217;s text should change to say something like &quot;Shake!&quot;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;span class=&quot;image&quot;&gt;&lt;img src=&quot;/assets/2022-01-03-yuzu-use-phone-emulate-controls/shake.png&quot; alt=&quot;shake&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;While the button&amp;#8217;s text says &quot;Shake!&quot;, you should then shake your phone.
+If everything works correctly, the button should now read &quot;cemuhookudp&quot;
+or something similar.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;span class=&quot;image&quot;&gt;&lt;img src=&quot;/assets/2022-01-03-yuzu-use-phone-emulate-controls/cemuhook.png&quot; alt=&quot;cemuhook&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At this point, you should be ready to use your phone for motion
+controls.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;</content><author><name>Christopher Chang</name></author><summary type="html">Emulating Switch games but can&amp;#8217;t get your Joy-Cons to connect to your computer? Without other such controllers, you might be unable to use motion controls.</summary></entry><entry><title type="html">Rust: waiting for std::backtrace to be stabilized</title><link href="https://superchig.com/2021/12/31/rust-waiting-for-std-backtrace.md-index.html" rel="alternate" type="text/html" title="Rust: waiting for std::backtrace to be stabilized" /><published>2021-12-31T00:00:00+00:00</published><updated>2021-12-31T00:00:00+00:00</updated><id>https://superchig.com/2021/12/31/rust-waiting-for-std-backtrace.md/index</id><content type="html" xml:base="https://superchig.com/2021/12/31/rust-waiting-for-std-backtrace.md-index.html">&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Every so often, I&amp;#8217;ve worked on a terminal file manager called
+&lt;a href=&quot;https://github.com/Superchig/rolf&quot;&gt;&lt;code&gt;rolf&lt;/code&gt;&lt;/a&gt;. Modeled after the excellent
+&lt;a href=&quot;https://github.com/gokcehan/lf&quot;&gt;lf&lt;/a&gt; file manager, this (woefully
+incomplete) project exists primarily to help me learn the Rust
+programming language.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When it comes to error handling, I&amp;#8217;d love to use the
+&lt;a href=&quot;https://github.com/dtolnay/anyhow&quot;&gt;anyhow library&lt;/a&gt; to help me concisely
+handle multiple different error types. However, support for backtraces
+is dependent on the &lt;code&gt;std::backtrace&lt;/code&gt; module, which is currently only
+available in &lt;a href=&quot;https://github.com/rust-lang/rust/issues/53487&quot;&gt;Rust
+nightly&lt;/a&gt;. Since I only occasionally work on &lt;code&gt;rolf&lt;/code&gt;, building it with
+later versions of Rust (with minimal-to-no changes) is a goal of mine.
+As a result, Rust nightly is off the table for my purposes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When errors occur, I find backtraces invaluable. Since &lt;code&gt;std::backtrace&lt;/code&gt;
+is locked behind nightly, it seems like using anyhow for error
+propagation will actually make it more difficult for me to access them.
+Instead, I&amp;#8217;ve been making liberal use of &lt;code&gt;unwrap()&lt;/code&gt; (even when I&amp;#8217;m aware
+that a function call may legitimately fail), which gives me stack
+traces. Of course, this comes at the cost of crashing the program on
+these errors.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Is this bad programming practice? Quite possibly. Certainly, no one
+should use &lt;code&gt;rolf&lt;/code&gt; for anything vital. To develop the project to a
+certain level of maturity, I would need to inspect my uses of &lt;code&gt;unwrap()&lt;/code&gt;
+by hand and properly handle legitimate errors. However, I may never get
+to that, and so crashing on errors is acceptable to me.&lt;/p&gt;
+&lt;/div&gt;</content><author><name>Christopher Chang</name></author><summary type="html">Every so often, I&amp;#8217;ve worked on a terminal file manager called rolf. Modeled after the excellent lf file manager, this (woefully incomplete) project exists primarily to help me learn the Rust programming language.</summary></entry></feed>

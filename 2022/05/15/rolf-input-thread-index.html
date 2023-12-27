@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Rolf: User Input, Threads, and Channels</title>
+  <meta name="description"
+    content="">
+  <link rel="canonical" href="https://superchig.com/2022/05/15/rolf-input-thread-">
+  <link rel="alternate" type="application/rss+xml" title="superchig" href="https://superchig.com/feed.xml">
+
+  <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Regular.woff2') format('woff2');
+    }
+
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Bold.woff2') format('woff2');
+      ;
+      font-weight: bold;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      margin-block-start: 0;
+      margin-block-end: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-weight: 300;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 80ch;
+      padding-left: 2ch;
+      padding-right: 2ch;
+    }
+
+    .site-header {
+      width: 100%;
+      max-width: 80ch;
+    }
+
+    .site-header>nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .site-header .-title {
+      flex-grow: 2;
+    }
+
+    .site-footer {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      width: 100%;
+      max-width: 80ch;
+      margin-top: 1rem;
+      height: 2rem;
+      padding-left: 1ch;
+      padding-right: 1ch;
+    }
+  </style>
+  <link rel="stylesheet" href=" /css/adoc.css">
+  <link rel="stylesheet" href=" /css/rouge-github.css">
+  <link rel="stylesheet" href=" /css/main.css">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400italic,700,700italic%7COpen+Sans:300">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <nav>
+      <a class="-title" href="/">superchig</a>
+      
+      
+      <a href="/about/">About</a>
+      
+      
+      
+      
+      
+      <a href="/opt-in-workflow-image-not-really/">Twilio</a>
+      
+      
+      
+      
+      
+      
+      <a href="/portfolio">Portfolio</a>
+    </nav>
+  </header>
+
+  <main>
+    <article>
+  <h1>Rolf: User Input, Threads, and Channels</h1>
+  <div class="post-meta sect1">May 15, 2022</div>
+  <div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Assume that you’re writing a TUI application (like
+<a href="https://github.com/Superchig/rolf"><code>rolf</code></a>) which does at least two
+things:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Respond to user input, and</p>
+</li>
+<li>
+<p>Load in incredibly large<sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup> images.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If you’re working on a program like this, you might run into an annoying
+problem: users have to wait for images to load before they can do
+anything.</p>
+</div>
+<div class="paragraph">
+<p>The solution to this problem is to asynchronously obtain user input.</p>
+</div>
+<div class="paragraph">
+<p>Depending on your runtime (e.g.
+<a href="https://thecodest.co/blog/asynchronous-and-single-threaded-javascript-meet-the-event-loop/">nodejs</a>),
+it’s possible to be both asynchronous and single-threaded.</p>
+</div>
+<div class="paragraph">
+<p>However, for the purposes of <code>rolf</code>, we used multiple threads to handle
+asynchronous input.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="architecture"><a class="anchor" href="#architecture"></a>Architecture</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For the purposes of this post, let&#8217;s say that there are 3 threads
+involved.<sup class="footnote">[<a id="_footnoteref_2" class="footnote" href="#_footnotedef_2" title="View footnote.">2</a>]</sup></p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="/assets/2022-05-15-rolf-input-thread/threads.png" alt="threads"></span></p>
+</div>
+<div class="paragraph">
+<p>As seen in the diagram above, we have a thread for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Receiving user input,</p>
+</li>
+<li>
+<p>Decoding images,</p>
+</li>
+<li>
+<p>And everything else (the Main thread)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>You might also notice that the Input and Image Decoding threads only interact
+with the Main thread, sending data back and forth to each other.</p>
+</div>
+<div class="paragraph">
+<p>The Input and Main threads will both run on "infinite" loops. The Input thread
+will wait for user input, sending it to the Main thread as necessary, and the
+Main thread will wait for either input data from the Input thread or decoded
+image data from the Image Decoding thread, processing this data as necessary.</p>
+</div>
+<div class="paragraph">
+<p>Notably, we achieve all of this without polling, instead using channels to send
+data between threads.</p>
+</div>
+<div class="paragraph">
+<p>Our Main thread will simply be the initial thread of the program, and our two
+other threads will be started by the Main thread.</p>
+</div>
+<div class="paragraph">
+<p>In this post, we&#8217;ll be looking at the relationship between the <em>Input thread</em>
+and <em>Main thread</em>. The Image Decoding thread is sophisticated enough to warrant
+a post of its own, which I may write in the future.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="channels"><a class="anchor" href="#channels"></a>Channels</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before starting the loops for either of the threads (in fact, before starting
+any additional threads beyond the Main one), we&#8217;re going to create a few
+channels.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="code"><pre><span class="k">let</span> <span class="p">(</span><span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">)</span> <span class="o">=</span> <span class="nf">channel</span><span class="p">();</span>
+
+<span class="k">let</span> <span class="p">(</span><span class="n">to_input_tx</span><span class="p">,</span> <span class="n">from_main_rx</span><span class="p">)</span> <span class="o">=</span> <span class="nf">sync_channel</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, we&#8217;ve created two channels:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>One which we&#8217;ll use for sending data to the Main thread,</p>
+</li>
+<li>
+<p>And another which we&#8217;ll use for sending data to the Input thread.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Since channels only send information in one direction, we need two channels if
+we want bidirectional communication between the Input thread and the Main
+thread. Why do we want bidirectional communication in the first place? We&#8217;ll
+discuss that more later.</p>
+</div>
+<div class="paragraph">
+<p>From our point of view, each channel consists of a sender and a receiver.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>For the first channel, <code>tx</code> will be our sender and <code>rx</code> will be our receiver.</p>
+</li>
+<li>
+<p>For the second channel, <code>to_input_tx</code> is our sender and <code>from_main_rx</code> is our
+receiver.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Notably, we use a different function to create each of our channels. I&#8217;m not
+sure if this is actually necessary, but this allows us to create
+asynchronous/infinitely buffered vs. synchronous/bounded channels. The
+distinction won&#8217;t matter massively for the purposes of this blog post, but you
+can read more about it <a href="https://doc.rust-lang.org/std/sync/mpsc/">here</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="data-between-channels"><a class="anchor" href="#data-between-channels"></a>Data Between Channels</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before we actually use the channels to send data between threads, let&#8217;s first
+establish the types of data that will be sent.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="code"><pre><span class="k">enum</span> <span class="n">InputEvent</span> <span class="p">{</span>
+    <span class="n">CrosstermEvent</span> <span class="p">{</span>
+        <span class="n">event</span><span class="p">:</span> <span class="nn">crossterm</span><span class="p">::</span><span class="nn">event</span><span class="p">::</span><span class="n">Event</span><span class="p">,</span>
+        <span class="n">input_request_count</span><span class="p">:</span> <span class="nb">usize</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="c">// Other events...</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="code"><pre><span class="k">enum</span> <span class="n">InputRequest</span> <span class="p">{</span>
+    <span class="nf">RequestNumber</span><span class="p">(</span><span class="nb">usize</span><span class="p">),</span>
+    <span class="n">Quit</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first enum we defined will be sent from the Input thread to the Main thread.</p>
+</div>
+<div class="paragraph">
+<p>The second enum is sent from the Main thread to the Input thread. This implies
+that the Main thread must request input from the Input thread before the Input
+thread actually sends any input. This is the primary reason we have
+bidirectional communication between the Main and Input threads, and it allows us
+to avoid a potentially annoying bug.</p>
+</div>
+<div class="sect2">
+<h3 id="bug-too-many-inputs"><a class="anchor" href="#bug-too-many-inputs"></a>Bug: Too Many Inputs</h3>
+<div class="paragraph">
+<p>In <code>rolf</code>, there&#8217;s a feature which allows the user to open up their current file
+in an external text editor of their choice (using the <code>EDITOR</code> and <code>VISUAL</code>
+environmental variables). Typical values of <code>EDITOR</code> might be <code>nano</code>, <code>vim</code>, or
+<code>emacsclient</code>. For this feature, the Main thread will block until the external
+text editor is closed.<sup class="footnote">[<a id="_footnoteref_3" class="footnote" href="#_footnotedef_3" title="View footnote.">3</a>]</sup></p>
+</div>
+<div class="paragraph">
+<p>Now imagine if we didn&#8217;t have the Main thread request input from the Input
+thread, instead making the Input thread send input through its
+infinitely-buffered channel as soon as it receive any from the user.</p>
+</div>
+<div class="paragraph">
+<p>If we combine this channel setup with the external editor feature described
+above, we&#8217;ll run into a curious problem: the Input thread may "steal"
+keypresses from the external editor.</p>
+</div>
+<div class="paragraph">
+<p>Since the Input thread will just receive input and send it to the Main thread
+whenever it receives a keypress, it can occasionally continue receiving these
+inputs even if, say, <code>vim</code> is being used to edit the current file. As a result,
+two annoying things will happen:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>These occasional inputs won&#8217;t make it to <code>vim</code>, resulting in the user being
+unsettled by the inconsistent (in)ability to provide input.</p>
+</li>
+<li>
+<p>These occasional inputs will be sent to the main thread, which will then
+process those inputs after the external editor is closed. This would also be
+disjarring for the user, as they would see apparent "phantom inputs" be
+rapidly processed after they finish editing.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>By making the Main Thread send requests for input to the Input thread, we can
+ensure that the Input thread only sends input to the Main thread when necessary.
+This prevents the above bug from happening entirely.</p>
+</div>
+<div class="paragraph">
+<p>You might&#8217;ve also noticed that both <code>InputRequest</code> and <code>CrosstermEvent</code> contain
+request numbers. These request numbers help the Main thread determine whether or
+not it should actually send a request for input, which is crucial for properly
+fixing this bug. We&#8217;ll dive more into that later.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="starting-the-input-thread"><a class="anchor" href="#starting-the-input-thread"></a>Starting the Input Thread</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that we have the channels and their data set up, it&#8217;s time to start the
+input loop.</p>
+</div>
+<div class="paragraph">
+<p>Specifically, we&#8217;ll start the input loop in its own thread, the Input thread.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+</pre></td><td class="code"><pre><span class="k">let</span> <span class="n">crossterm_input_tx</span> <span class="o">=</span> <span class="n">tx</span><span class="nf">.clone</span><span class="p">();</span>
+
+<span class="nn">std</span><span class="p">::</span><span class="nn">thread</span><span class="p">::</span><span class="nf">spawn</span><span class="p">(</span><span class="k">move</span> <span class="p">||</span> <span class="p">{</span>
+    <span class="k">loop</span> <span class="p">{</span>
+        <span class="k">let</span> <span class="n">input_request_count</span> <span class="o">=</span> <span class="k">match</span> <span class="n">from_main_rx</span><span class="nf">.recv</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nf">Ok</span><span class="p">(</span><span class="nn">InputRequest</span><span class="p">::</span><span class="nf">RequestNumber</span><span class="p">(</span><span class="n">input_request_count</span><span class="p">))</span> <span class="k">=&gt;</span> <span class="n">input_request_count</span><span class="p">,</span>
+            <span class="nf">Ok</span><span class="p">(</span><span class="nn">InputRequest</span><span class="p">::</span><span class="n">Quit</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="k">break</span><span class="p">,</span>
+            <span class="nf">Err</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(</span><span class="s">"Input thread: Lost connnection to main thread: {:?}"</span><span class="p">,</span> <span class="n">err</span><span class="p">),</span>
+        <span class="p">};</span>
+
+        <span class="k">let</span> <span class="n">crossterm_event</span> <span class="o">=</span> <span class="nn">event</span><span class="p">::</span><span class="nf">read</span><span class="p">()</span><span class="nf">.expect</span><span class="p">(</span><span class="s">"Unable to read crossterm event"</span><span class="p">);</span>
+
+        <span class="n">crossterm_input_tx</span>
+            <span class="nf">.send</span><span class="p">(</span><span class="nn">InputEvent</span><span class="p">::</span><span class="n">CrosstermEvent</span> <span class="p">{</span>
+                <span class="n">event</span><span class="p">:</span> <span class="n">crossterm_event</span><span class="p">,</span>
+                <span class="n">input_request_count</span><span class="p">,</span>
+            <span class="p">})</span>
+            <span class="nf">.expect</span><span class="p">(</span><span class="s">"Unable to send on channel"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, to satisfy the Rust borrow checker, we need to clone our sender before we
+use it in the actual thread. Since these channels are multi-producer,
+single-consumer, this is how we handle having more than one possible sender
+(producer) to the Main thread.</p>
+</div>
+<div class="paragraph">
+<p>The rest of the thread is mostly what you&#8217;d expect, with a bit of bookkeeping
+for request numbers and requests to quit the thread.</p>
+</div>
+<div class="paragraph">
+<p>Notably, the Input thread keeps track of the request number of the most recent
+input request sent to it by the Main thread, and then it sends this number back
+to the Main thread alongside the actual input data.</p>
+</div>
+<div class="paragraph">
+<p>This implies the Main thread will be the only thread to modify request numbers
+at all. We&#8217;ll see more about this in a bit.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="loop-in-the-main-thread"><a class="anchor" href="#loop-in-the-main-thread"></a>Loop in the Main Thread</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As the name might indicate, the Main thread is where the real meat and bones of
+<code>rolf</code> takes place. Since they can get fairly complex, we&#8217;ll omit most of those
+details, only showing the parts that are relevant to managing concurrency.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="rust"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+</pre></td><td class="code"><pre><span class="k">let</span> <span class="k">mut</span> <span class="n">input_request_count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">let</span> <span class="k">mut</span> <span class="n">last_recv_req_count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="c">// Other initialization code...</span>
+
+<span class="k">loop</span> <span class="p">{</span>
+    <span class="c">// Main drawing code...</span>
+
+    <span class="c">// Other stuff...</span>
+
+    <span class="k">let</span> <span class="n">event</span> <span class="o">=</span> <span class="k">match</span> <span class="n">rx</span><span class="nf">.try_recv</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nf">Ok</span><span class="p">(</span><span class="n">event</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="n">event</span><span class="p">,</span>
+        <span class="nf">Err</span><span class="p">(</span><span class="nn">TryRecvError</span><span class="p">::</span><span class="n">Empty</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="n">input_request_count</span> <span class="o">==</span> <span class="n">last_recv_req_count</span> <span class="p">{</span>
+                <span class="n">input_request_count</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="n">to_input_tx</span>
+                    <span class="nf">.send</span><span class="p">(</span><span class="nn">InputRequest</span><span class="p">::</span><span class="nf">RequestNumber</span><span class="p">(</span><span class="n">input_request_count</span><span class="p">))</span>
+                    <span class="nf">.expect</span><span class="p">(</span><span class="s">"Unable to send to input thread"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">rx</span><span class="nf">.recv</span><span class="p">()</span><span class="nf">.unwrap</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="nf">Err</span><span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="nd">panic!</span><span class="p">(</span><span class="s">"Unable to obtain input event: {}"</span><span class="p">,</span> <span class="n">err</span><span class="p">),</span>
+    <span class="p">};</span>
+
+    <span class="k">match</span> <span class="n">event</span> <span class="p">{</span>
+        <span class="nn">InputEvent</span><span class="p">::</span><span class="n">CrosstermEvent</span> <span class="p">{</span>
+            <span class="n">event</span><span class="p">,</span>
+            <span class="n">input_request_count</span><span class="p">,</span>
+        <span class="p">}</span> <span class="k">=&gt;</span> <span class="p">{</span>
+            <span class="n">last_recv_req_count</span> <span class="o">=</span> <span class="n">input_request_count</span><span class="p">;</span>
+
+            <span class="c">// Process input from user...</span>
+        <span class="p">}</span>
+        <span class="c">// Handle other events...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As mentioned earlier, the Main thread handles updates request numbers and
+determines if it should send an input request.</p>
+</div>
+<div class="paragraph">
+<p>When determining if we should send an input request, there are two key things to
+keep in mind:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>We should only ask for a keypress if there&#8217;s no other input or data to process.</p>
+</li>
+<li>
+<p>We should only ask for a keypress if the Input thread has already responded to
+our last input request.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>In practice, the first item means only asking for a keypress if there are no
+existing <code>InputEvent</code> values in the channel to the main thread. This is
+precisely what lines <code>11</code>-<code>24</code> of the above code block are achieving.</p>
+</div>
+<div class="paragraph">
+<p>To handle the second item, we need to keep track of two key things:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The request number of the most recently sent input request
+(<code>input_request_count</code>).</p>
+</li>
+<li>
+<p>And the request number associated with the last <code>CrosstermEvent</code> received by
+the Main thread from the Input thread (<code>last_recv_req_count</code>).</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>By comparing request numbers for equality, we can see which <code>CrosstermEvent</code>
+values were prompted by which input requests. Thus, to see if the Input thread
+has already responded to our last input request, we can check if the
+<code>input_request_count</code> number is equal to the <code>last_recv_req_count</code> number.</p>
+</div>
+<div class="sect2">
+<h3 id="possible-bug-integer-overflow"><a class="anchor" href="#possible-bug-integer-overflow"></a>Possible Bug: Integer Overflow</h3>
+<div class="paragraph">
+<p>You might&#8217;ve noticed that we&#8217;re just incrementing <code>input_request_count</code> every
+time we make a new input request.</p>
+</div>
+<div class="paragraph">
+<p>If we continue doing that for long enough, the value of <code>input_request_count</code>
+will surpass the maximum value of a 64-bit unsigned integer, resulting in
+integer overflow.</p>
+</div>
+<div class="paragraph">
+<p>There&#8217;s a simple fix to this problem: wrapping the integer.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Before incrementing, check if <code>input_request_count</code> is at the maximum value
+for its type.</p>
+</li>
+<li>
+<p>If it is, then set <code>input_request_count</code> back to 0.</p>
+</li>
+<li>
+<p>Otherwise, increment it as normal.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>In practice, I haven&#8217;t run into this bug yet (due to the incredibly high number
+of <code>CrosstermEvent</code> values which would have to be sent to trigger it).</p>
+</div>
+<div class="paragraph">
+<p>In
+<a href="https://huonw.github.io/blog/2016/04/myths-and-legends-about-integer-overflow-in-rust/">release
+builds</a> with Rust, integers will wrap around using two&#8217;s complement, so this
+bug won&#8217;t really be visible. If I understand this correctly, two&#8217;s complement
+wraparound will in effect achieve the wrapping algorithm I described above.</p>
+</div>
+<div class="paragraph">
+<p>In debug builds, overflow will be checked at runtime, with the program panicking
+if overflow does occur. I probably won&#8217;t ever use <code>rolf</code> enough to trigger this
+bug in a debug build (or in any build, really).</p>
+</div>
+<div class="paragraph">
+<p>Fortunately, if this does turn out to be an issue, the fix should be fairly
+simple.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="parting-thoughts"><a class="anchor" href="#parting-thoughts"></a>Parting Thoughts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>It took me a crazy long time to figure out how to address the input "stealing"
+bug. Arguably, finding that bug (in addition to the asynchronous image loading
+problem) was one of the leading factors which led me to reshape the architecture
+of <code>rolf</code> into what it is now.</p>
+</div>
+<div class="paragraph">
+<p>If you ever run into a similar problem, I hope this is useful to you!</p>
+</div>
+<div class="paragraph">
+<p><strong>Note</strong>: Have I made any typos? Am I blatantly wrong about something? Do
+you just have general feedback? I’m still a Rust novice (arguably a
+programming novice, in general), so feel free to email me at
+<a href="mailto:chiggiechang@gmail.com"><code>chiggiechang@gmail.com</code></a>. But be polite,
+please!</p>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<hr>
+<div class="footnote" id="_footnotedef_1">
+<a href="#_footnoteref_1">1</a>. Rolf doesn&#8217;t necessarily load insanely large images, but there can be a noticeable loading time. Going forward, we might want to use a <a href="https://lib.rs/crates/mozjpeg">faster JPEG decoder</a>.
+</div>
+<div class="footnote" id="_footnotedef_2">
+<a href="#_footnoteref_2">2</a>. <code>rolf</code> actually uses more threads than the ones shown here, but they&#8217;re not relevant to this post.
+</div>
+<div class="footnote" id="_footnotedef_3">
+<a href="#_footnoteref_3">3</a>. Specifically, the Main thread will block until the child process spawned by it to open up the external editor is closed.
+</div>
+</div>
+</article>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      <a href="https://github.com/Superchig/superchig.github.io/edit/main/_posts/2022-05-15-rolf-input-thread/index.adoc">
+        <i class="fa fa-edit"></i> fix typo
+      </a>
+
+      <a href=" /feed.xml">
+        <i class="fa fa-rss"></i> rss
+      </a>
+
+      <a href="https://github.com/Superchig">
+        <i class="fa fa-github"></i> superchig
+      </a>
+    </p>
+  </footer>
+</body>
+
+</html>

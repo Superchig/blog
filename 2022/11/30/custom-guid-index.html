@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Custom GUIDs in Unity</title>
+  <meta name="description"
+    content="">
+  <link rel="canonical" href="https://superchig.com/2022/11/30/custom-guid-">
+  <link rel="alternate" type="application/rss+xml" title="superchig" href="https://superchig.com/feed.xml">
+
+  <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Regular.woff2') format('woff2');
+    }
+
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Bold.woff2') format('woff2');
+      ;
+      font-weight: bold;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      margin-block-start: 0;
+      margin-block-end: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-weight: 300;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 80ch;
+      padding-left: 2ch;
+      padding-right: 2ch;
+    }
+
+    .site-header {
+      width: 100%;
+      max-width: 80ch;
+    }
+
+    .site-header>nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .site-header .-title {
+      flex-grow: 2;
+    }
+
+    .site-footer {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      width: 100%;
+      max-width: 80ch;
+      margin-top: 1rem;
+      height: 2rem;
+      padding-left: 1ch;
+      padding-right: 1ch;
+    }
+  </style>
+  <link rel="stylesheet" href=" /css/adoc.css">
+  <link rel="stylesheet" href=" /css/rouge-github.css">
+  <link rel="stylesheet" href=" /css/main.css">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400italic,700,700italic%7COpen+Sans:300">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <nav>
+      <a class="-title" href="/">superchig</a>
+      
+      
+      <a href="/about/">About</a>
+      
+      
+      
+      
+      
+      <a href="/opt-in-workflow-image-not-really/">Twilio</a>
+      
+      
+      
+      
+      
+      
+      <a href="/portfolio">Portfolio</a>
+    </nav>
+  </header>
+
+  <main>
+    <article>
+  <h1>Custom GUIDs in Unity</h1>
+  <div class="post-meta sect1">Nov 30, 2022</div>
+  <div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#the-problem">The Problem</a></li>
+<li><a href="#guids">GUIDs</a></li>
+<li><a href="#the-executealways-attribute">The ExecuteAlways Attribute</a>
+<ul class="sectlevel2">
+<li><a href="#example-executealways">Example: ExecuteAlways</a></li>
+<li><a href="#start-awake-and-update">Start, Awake, and Update</a></li>
+<li><a href="#script-usage-executealways">Script Usage: ExecuteAlways</a></li>
+</ul>
+</li>
+<li><a href="#editor-apis-serializedproperty-and-serializedobject">Editor APIs: SerializedProperty and SerializedObject</a>
+<ul class="sectlevel2">
+<li><a href="#script-usage-string-field-for-guid">Script Usage: String Field For GUID</a></li>
+<li><a href="#a-naive-and-somewhat-buggy-approach">A Naive (and Somewhat Buggy) Approach</a></li>
+<li><a href="#why-use-serializedobject-and-serializedproperty">Why Use SerializedObject and SerializedProperty?</a></li>
+<li><a href="#editor-api-serializedobject">Editor API: SerializedObject</a></li>
+<li><a href="#editor-api-serializedproperty">Editor API: SerializedProperty</a></li>
+<li><a href="#problem-we-cant-build">Problem: We Can&#8217;t Build!</a></li>
+</ul>
+</li>
+<li><a href="#c-preprocessor-directives">C# Preprocessor Directives</a>
+<ul class="sectlevel2">
+<li><a href="#example-c-preprocessor-directives">Example: C# Preprocessor Directives</a></li>
+<li><a href="#script-usage-preprocessor">Script Usage: C# Preprocessor Directives</a></li>
+</ul>
+</li>
+<li><a href="#nameof-expression">The nameof Expression</a>
+<ul class="sectlevel2">
+<li><a href="#script-usage-nameof">Script Usage: nameof</a></li>
+</ul>
+</li>
+<li><a href="#stop-constant-change">Stop Constantly Changing GUIDs</a></li>
+<li><a href="#handling-duplication">Handling Duplication</a>
+<ul class="sectlevel2">
+<li><a href="#script-usage-handling-duplication">Script Usage: Handling Duplication</a></li>
+</ul>
+</li>
+<li><a href="#handling-new-gameobjects">Handling New GameObjects</a></li>
+<li><a href="#handling-prefab-instances">Handling Prefab Instances</a>
+<ul class="sectlevel2">
+<li><a href="#script-usage-isinstantiatedprefab-and-prefaboverride">Script Usage: isInstantiatedPrefab and prefabOverride</a></li>
+</ul>
+</li>
+<li><a href="#handling-prefabs-editorapis">Handling Prefabs (EditorAPIs)</a>
+<ul class="sectlevel2">
+<li><a href="#prefabstage-and-prefabstageutility">PrefabStage and PrefabStageUtility</a></li>
+<li><a href="#script-usage-prefabstage-and-prefabstageutility">Script Usage: PrefabStage and PrefabStageUtility</a></li>
+<li><a href="#what-about-prefab-previews">What About Prefab Previews?</a></li>
+</ul>
+</li>
+<li><a href="#full-script">Full Script</a></li>
+</ul>
+</div>
+<div class="sect1">
+<h2 id="introduction"><a class="anchor" href="#introduction"></a>Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you&#8217;ve ever tried to save data for many entities in a video game, you&#8217;ve
+probably come across an approach that looks like this:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Associate each entity with a persistent, unique ID.</p>
+</li>
+<li>
+<p>Create a key-value store (like a Python dictionary), using these IDs as keys
+and records with the relevant data for each entity as values.</p>
+</li>
+<li>
+<p>Write the key-value store to disk / read the key-value store from disk as
+necessary.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>It&#8217;s possible to go into significantly more detail for each of these steps, but
+this article will focus primarily on the first one: assigning persistent, unique
+IDs.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="the-problem"><a class="anchor" href="#the-problem"></a>The Problem</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Specifically, this article will explain how to create a MonoBehaviour script
+which, when attached to a GameObject, will assign it a unique ID that persists
+between different play sessions.</p>
+</div>
+<div class="paragraph">
+<p>With a script like this, you would want these IDs to be unique even in the
+following situations:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>A developer duplicates a GameObject (in the editor).</p>
+</li>
+<li>
+<p>A developer converts a GameObject into a prefab (in the editor).</p>
+</li>
+<li>
+<p>A developer instantiates a prefab (in the editor).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>If a normal MonoBehaviour script were attached to the GameObject in any of these
+cases, then the fields on that script would be duplicated along with the
+GameObject.</p>
+</div>
+<div class="paragraph">
+<p>You would have GameObjects with the same IDs as their prefabs, or duplicate
+GameObjects with identical IDs. This would make it impossible to save/load data
+for individual GameObjects.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="guids"><a class="anchor" href="#guids"></a>GUIDs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First of all, let&#8217;s settle what a GUID is. In short, a GUID (also known as a
+<a href="https://en.wikipedia.org/wiki/Universally_unique_identifier">UUID</a>) is a 128-bit
+data structure that represents a globally unique ID.</p>
+</div>
+<div class="paragraph">
+<p>As the name of this article implies, we&#8217;ll be using GUIDs as our IDs in this
+article.</p>
+</div>
+<div class="paragraph">
+<p>Specifically, we&#8217;ll be (automatically) creating these GUIDs in the editor, so
+that the specific GUID value for each GameObject is part of its scene. This will
+keep these GUIDs the same every time the player plays the game.</p>
+</div>
+<div class="paragraph">
+<p>Unity already uses GUIDs to refer to different assets in the editor (and you can
+actually see them in use if you look into the .meta or .asset files in a Unity
+project).</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s worth nothing that Unity already creates unique IDs to refer to each
+GameObject. However, these IDs will change between
+<a href="https://docs.unity3d.com/ScriptReference/Object.GetInstanceID.html">player
+runtime and Editor sessions</a>, making them useless for the purposes of
+saving/loading data.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="the-executealways-attribute"><a class="anchor" href="#the-executealways-attribute"></a>The ExecuteAlways Attribute</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In Unity, our C# scripts typically run during a player&#8217;s runtime session.
+That is, they execute code either when we play the game in the editor or when
+the player is running an actual build.</p>
+</div>
+<div class="paragraph">
+<p>Since we&#8217;re creating GUIDs in the editor, we&#8217;ll need to execute some code in the
+editor itself. That is, we&#8217;ll want the script to execute before we even start
+the game, as we create prefabs or instantiate GameObjects while in the editor.
+To achieve this, we&#8217;ll use
+<a href="https://docs.unity3d.com/ScriptReference/ExecuteAlways.html">the <code>ExecuteAlways</code>
+attribute</a>.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s worth noting that there is an
+<a href="https://docs.unity3d.com/2021.3/Documentation/ScriptReference/ExecuteInEditMode.html">older
+and similar attribute called <code>ExecuteInEditMode</code></a>, which has been deprecated.
+Annoyingly, this deprecation warning only shows up in the middle of its
+documentation (at least for Unity version 2021.3).</p>
+</div>
+<div class="sect2">
+<h3 id="example-executealways"><a class="anchor" href="#example-executealways"></a>Example: ExecuteAlways</h3>
+<div class="paragraph">
+<p>The syntax for the ExecuteAlways attribute is fairly straightforward. This
+example is taken from Unity&#8217;s documentation for the attribute:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td><td class="code"><pre><span class="k">using</span> <span class="nn">UnityEngine</span><span class="p">;</span>
+
+<span class="p">[</span><span class="n">ExecuteAlways</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">ExampleClass</span> <span class="p">:</span> <span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+    <span class="k">void</span> <span class="nf">Start</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="c1">// Play logic</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+            <span class="c1">// Editor logic</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As seen on line 3, this class has been marked with <code>ExecuteAlways</code>. As a result,
+it now has the ability to execute code at both runtime and in the editor itself.</p>
+</div>
+<div class="paragraph">
+<p>To execute different code between runtime and the editor, we can use the
+<code>Application.IsPlaying</code> method, passing the script&#8217;s own GameObject as an
+argument. This method will return true if we&#8217;re in a play session, and it will
+return false if we&#8217;re only in the editor.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="start-awake-and-update"><a class="anchor" href="#start-awake-and-update"></a>Start, Awake, and Update</h3>
+<div class="paragraph">
+<p>With a normal script, the <code>Start</code>, <code>Awake</code>, <code>Update</code> methods execute when the scene is
+loaded and every frame, respectively. Both of these methods only run during a
+play session. With the <code>ExecuteAlways</code> attribute, these methods will execute
+in the editor as well as during a play session. Specifically:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In the editor, <code>Start</code> will execute when a script is first attached to a
+GameObject and when the scene is loaded.</p>
+</li>
+<li>
+<p>In the editor, <code>Awake</code> behaves similarly to <code>Start</code>, except that it is
+executed first and it will execute even if the script component is disabled.</p>
+</li>
+<li>
+<p>In the editor, <code>Update</code> will be called whenever something in the scene is
+changed.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We&#8217;ll be using the <code>Awake</code> and <code>Update</code> methods in our script. Though we could
+conceptually do everything in <code>Update</code>, we&#8217;ll use <code>Awake</code> to perform
+particularly expensive operations as a performance optimization.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="script-usage-executealways"><a class="anchor" href="#script-usage-executealways"></a>Script Usage: ExecuteAlways</h3>
+<div class="paragraph">
+<p>Let&#8217;s start our actual script, using these features:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="code"><pre><span class="c1">// Using statements...</span>
+
+<span class="p">[</span><span class="n">ExecuteAlways</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CustomGUID</span> <span class="p">:</span> <span class="n">MonoBehavior</span>
+<span class="p">{</span>
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Awake</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="c1">// Only in editor</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Update</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="c1">// Only in editor</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this script, both our <code>Awake</code> and our <code>Update</code> methods will only execute code
+in the editor. They won&#8217;t execute any code when the player is actually playing
+the game.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="editor-apis-serializedproperty-and-serializedobject"><a class="anchor" href="#editor-apis-serializedproperty-and-serializedobject"></a>Editor APIs: SerializedProperty and SerializedObject</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We need the Editor APIs to properly modify our GUID field from the editor
+(especially if the script is attached to a prefab asset).</p>
+</div>
+<div class="paragraph">
+<p>But before we look at the Editor APIs, let&#8217;s first look at our <code>guid</code> field.</p>
+</div>
+<div class="sect2">
+<h3 id="script-usage-string-field-for-guid"><a class="anchor" href="#script-usage-string-field-for-guid"></a>Script Usage: String Field For GUID</h3>
+<div class="paragraph">
+<p>We&#8217;ll store our GUIDs as strings, via a field:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="code"><pre><span class="c1">// Using statements...</span>
+
+<span class="p">[</span><span class="n">ExecuteAlways</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CustomGUID</span> <span class="p">:</span> <span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">guid</span><span class="p">;</span>
+
+    <span class="c1">// Awake and Update methods...</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Though <code>Guid</code> already exists as a part of
+<a href="https://learn.microsoft.com/en-us/dotnet/api/system.guid?view=net-7.0">C#'s
+standard library</a> (and we&#8217;ll be using this type to generate our GUIDs), we&#8217;ll be
+storing them as strings for a few reasons:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Unity&#8217;s built-in serialization doesn&#8217;t directly support <code>Guid</code> fields, but it
+does support strings.</p>
+</li>
+<li>
+<p>By directly serializing strings, we can easily view the GUIDs in the editor
+itself, seeing the typical hexadecimal representation for a GUID.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>From here on, if I refer to the GUID of a GameObject, I mean the <code>guid</code> field
+of a <code>CustomGUID</code> script that has been attached to that GameObject.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="a-naive-and-somewhat-buggy-approach"><a class="anchor" href="#a-naive-and-somewhat-buggy-approach"></a>A Naive (and Somewhat Buggy) Approach</h3>
+<div class="paragraph">
+<p>Under normal circumstances, you would update this <code>guid</code> field by simply
+assigning to it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td><td class="code"><pre><span class="c1">// Using statements...</span>
+
+<span class="p">[</span><span class="n">ExecuteAlways</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CustomGUID</span> <span class="p">:</span> <span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">guid</span><span class="p">;</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Awake</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">// Assign a new GUID as necessary</span>
+	    <span class="n">guid</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">ToString</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Update method not implemented...</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When simply assigning to GameObjects or duplicating them, this code will assign
+GUIDs properly.</p>
+</div>
+<div class="paragraph">
+<p>However, when this CustomGUID script is attached to a prefab, an annoying bug
+will appear: the script will be unable to properly read from and write to the
+<code>guid</code> field.</p>
+</div>
+<div class="paragraph">
+<p>That is, when attached to a prefab asset, the script will always consider the
+<code>guid</code> to initially be <code>null</code>, even if the prefab is actually storing a valid
+GUID in the field. This makes it difficult to detect when we should generate a
+new GUID (we&#8217;ll discuss the exact algorithm for this later).</p>
+</div>
+<div class="paragraph">
+<p>Additionally, this approach will fail to write to a script&#8217;s field in a prefab
+asset. Even though it would seem like values have been assigned to these fields,
+those values would not persist in the prefab asset itself.</p>
+</div>
+<div class="paragraph">
+<p>To solve these problems, we will use parts of the Unity API that are normally
+seen in custom editors: the
+<a href="https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedObject.html">SerializedObject</a>
+and
+<a href="https://docs.unity3d.com/2021.3/Documentation/ScriptReference/SerializedProperty.html">SerializedProperty</a>
+classes.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="why-use-serializedobject-and-serializedproperty"><a class="anchor" href="#why-use-serializedobject-and-serializedproperty"></a>Why Use SerializedObject and SerializedProperty?</h3>
+<div class="paragraph">
+<p>In short, <code>SerializedObject</code> and <code>SerializedProperty</code> are how you&#8217;re supposed to
+modify the fields of a MonoBehavior script when executing code in the Unity
+editor itself. When used, they will automatically support key editor
+functionality like undo and prefab overrides.</p>
+</div>
+<div class="paragraph">
+<p>For our use case, we&#8217;re more interested in the fact that these classes avoid the
+prefab-related bugs mentioned earlier.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="editor-api-serializedobject"><a class="anchor" href="#editor-api-serializedobject"></a>Editor API: SerializedObject</h3>
+<div class="paragraph">
+<p>As its name might imply, <code>SerializedObject</code> represents an object and will
+indirectly allow us to modify the fields in this object. Specifically, it
+represents an object that descends from the <code>Object</code> class
+<a href="https://docs.unity3d.com/2021.3/Documentation/ScriptReference/Object.html">provided
+by Unity</a>.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s worth noting that C# also provides an <code>Object</code> class, and that
+<a href="https://learn.microsoft.com/en-us/dotnet/api/system.object?view=net-7.0">all
+classes in C# inherit from this class</a>. Somewhat confusingly, this <code>Object</code>
+class is <strong>not</strong> the <code>Object</code> class provided by Unity.</p>
+</div>
+<div class="paragraph">
+<p>Both GameObjects and MonoBehavior scripts descend from Unity&#8217;s <code>Object</code> class,
+so we&#8217;ll be able to use <code>SerializedObject</code> to represent the script that we want
+to modify.</p>
+</div>
+<div class="paragraph">
+<p>Concretely speaking, we&#8217;ll only directly use a <code>SerializedObject</code> to gain access
+to a <code>SerializedProperty</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="editor-api-serializedproperty"><a class="anchor" href="#editor-api-serializedproperty"></a>Editor API: SerializedProperty</h3>
+<div class="paragraph">
+<p>The <code>SerializedProperty</code> class allows us to actually modify an object&#8217;s field.
+However, in order to obtain it, we first need to create a <code>SerializedObject</code>
+(which is why I described <code>SerializedObject</code> first).</p>
+</div>
+<div class="paragraph">
+<p>While using this part of the Editor API, we need to follow these 4 broad steps
+to modify an object&#8217;s field:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Obtain a <code>SerializedObject</code> that represents our MonoBehavior script.</p>
+</li>
+<li>
+<p>Obtain a <code>SerializedProperty</code> from the <code>SerializedObject</code> that represents a
+specific field.</p>
+</li>
+<li>
+<p>Tell the <code>SerializedProperty</code> that you want to change the relevant field.</p>
+</li>
+<li>
+<p>Finalize your changes via the <code>SerializedObject</code>.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The following example code will show how to set our <code>guid</code> field via these parts
+of the Editor API:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+</pre></td><td class="code"><pre><span class="c1">// Other using statements...</span>
+<span class="k">using</span> <span class="nn">UnityEditor</span><span class="p">;</span>
+
+<span class="p">[</span><span class="n">ExecuteAlways</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CustomGUID</span> <span class="p">:</span> <span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">guid</span><span class="p">;</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Awake</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">// For now, always assign a new GUID</span>
+
+            <span class="c1">// Step 1</span>
+            <span class="n">SerializedObject</span> <span class="n">serializedObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SerializedObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="c1">// Step 2</span>
+            <span class="n">SerializedProperty</span> <span class="n">guidProperty</span> <span class="p">=</span>
+                <span class="n">serializedObject</span><span class="p">.</span><span class="nf">FindProperty</span><span class="p">(</span><span class="s">"guid"</span><span class="p">);</span>
+
+            <span class="c1">// Step 3</span>
+            <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">ToString</span><span class="p">();</span>
+
+            <span class="c1">// Step 4</span>
+            <span class="n">serializedObject</span><span class="p">.</span><span class="nf">ApplyModifiedProperties</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Update method not implemented...</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The 4 statements in our <code>Awake</code> method shown above correspond to the 4 steps
+necessary for us to modify a field.</p>
+</div>
+<div id="editor-api-problems" class="paragraph">
+<p>There are two potentially problematic details here:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>On lines 18/19, we obtain a SerializedProperty by searching for a field with
+the name <code>"guid"</code> (via a string argument to a method). This may lead to bugs if
+we ever change the name of this field (which we will address
+<a href="#nameof-expression">later in this post</a>).</p>
+</li>
+<li>
+<p>As seen on line 2, we have to write a <code>using UnityEditor</code> statement,
+otherwise we won&#8217;t have access to <code>SerializedObject</code> and <code>SerializedProperty</code>
+from the Editor API. This will lead to problems when making builds of our
+game (as we will shortly discuss).</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="problem-we-cant-build"><a class="anchor" href="#problem-we-cant-build"></a>Problem: We Can&#8217;t Build!</h3>
+<div class="paragraph">
+<p>If you tried to build a project that uses <code>SerializedObject</code> and
+<code>SerializedProperty</code> in a MonoBehavior script (as we demonstrated above), you
+would run into an annoying problem: the project would fail to build entirely.</p>
+</div>
+<div class="paragraph">
+<p>Our problem most directly originates with our use of the <code>UnityEditor</code>
+namespace. We need this namespace to access <code>SerializedObject</code> and
+<code>SerializedProperty</code>, but, as stated in its
+<a href="https://docs.unity3d.com/2021.3/Documentation/ScriptReference/UnityEditor.html">documentation</a>,
+we can&#8217;t reference this namespace in scripts that are compiled for a
+final build.</p>
+</div>
+<div class="paragraph">
+<p>APIs in <code>UnityEditor</code> are typically used in when writing custom Editors in
+Unity. In our case, we&#8217;re not doing this. Instead, we&#8217;re using these APIs in a
+MonoBehavior script that has been annotated with the <code>ExecuteAlways</code> attribute.
+As with normal MonoBehavior scripts, our script will be compiled when making a
+build.</p>
+</div>
+<div class="paragraph">
+<p>Here&#8217;s a key insight: even though our <code>CustomGUID</code> script will be compiled for a
+user-facing build, only part of its functionality needs to be available when the
+game is running.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In the game itself: we need access to the GUID for each relevant GameObject.
+This does not require any of the Editor APIs. This essentially just requires
+the <code>guid</code> field.</p>
+</li>
+<li>
+<p>In the editor: we need to ensure that the GUIDs attached to GameObjects are
+unique, even when a GameObject is duplicated or instantiated from a prefab.
+This will require the Editor APIs, so that we can properly assign to the
+<code>guid</code> field from the editor itself.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>With this in mind, we can make a key conclusion: we only need the Editor APIs
+while in the Unity editor itself.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="c-preprocessor-directives"><a class="anchor" href="#c-preprocessor-directives"></a>C# Preprocessor Directives</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In order to make our project build properly, we&#8217;ll be using something called
+<a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/preprocessor-directives">C#
+preprocessor directives</a>.</p>
+</div>
+<div class="paragraph">
+<p>With this feature of C# (and its integration with Unity), we can avoid compiling
+the editor-specific part of our script in player-facing builds.</p>
+</div>
+<div class="sect2">
+<h3 id="example-c-preprocessor-directives"><a class="anchor" href="#example-c-preprocessor-directives"></a>Example: C# Preprocessor Directives</h3>
+<div class="paragraph">
+<p>Let&#8217;s look at a brief of example of the relevant syntax:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre></td><td class="code"><pre><span class="cp">#if UNITY_EDITOR
+</span>
+    <span class="n">Debug</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="s">"Hello, editor!"</span><span class="p">);</span>
+
+<span class="cp">#endif
+</span></pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the example above, the <code>#if UNITY_EDITOR</code> and <code>#endif</code> lines are preprocessor
+directives<sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup>. With these directives, the <code>Debug.Log("Hello,
+editor!")</code> line will only compile within the editor itself. When we make a full
+build for the game, this line (and everything between these two directives)
+won&#8217;t be compiled at all. From the compiler&#8217;s point of view, it&#8217;ll be as if
+these lines simply aren&#8217;t in our source code.</p>
+</div>
+<div class="paragraph">
+<p>This technique is called
+<a href="https://docs.unity3d.com/2021.3/Documentation/Manual/PlatformDependentCompilation.html">conditional </a>
+<a href="https://en.wikipedia.org/wiki/Conditional_compilation">compilation</a>,
+as it only compiles parts of the code when certain conditions are
+true (like being in the Unity editor or not).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="script-usage-preprocessor"><a class="anchor" href="#script-usage-preprocessor"></a>Script Usage: C# Preprocessor Directives</h3>
+<div class="paragraph">
+<p>Now that we have an understanding of the syntax, let&#8217;s use C# preprocessor
+directives in our script itself:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+</pre></td><td class="code"><pre><span class="c1">// Other using statements...</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span><span class="k">using</span> <span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="cp">#endif
+</span>
+<span class="p">[</span><span class="n">ExecuteAlways</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CustomGUID</span> <span class="p">:</span> <span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">guid</span><span class="p">;</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span>    <span class="k">private</span> <span class="k">void</span> <span class="nf">Awake</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">// For now, always assign a new GUID</span>
+
+            <span class="n">SerializedObject</span> <span class="n">serializedObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SerializedObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="n">SerializedProperty</span> <span class="n">guidProperty</span> <span class="p">=</span>
+                <span class="n">serializedObject</span><span class="p">.</span><span class="nf">FindProperty</span><span class="p">(</span><span class="s">"guid"</span><span class="p">);</span>
+
+            <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">ToString</span><span class="p">();</span>
+
+            <span class="n">serializedObject</span><span class="p">.</span><span class="nf">ApplyModifiedProperties</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span>
+    <span class="c1">// Update method not implemented...</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>There are currently 2 blocks of code that we conditionally compile, since both
+of them involve the Editor APIs:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The <code>using UnityEditor</code> statement.</p>
+</li>
+<li>
+<p>The <code>Awake</code> method.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>When we&#8217;re in our editor, both of these sections of code will compile, ensuring
+that our script can assign different GUID values as necessary.</p>
+</div>
+<div class="paragraph">
+<p>When making a final build, however, both sections of code will be ignored,
+leaving our script with no references to <code>UnityEditor</code> or anything in that
+namespace. This will allow us to successfully create a final build. This final
+build will still have access to the <code>guid</code> field, as it is not surrouded by
+preprocessor directives.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="nameof-expression"><a class="anchor" href="#nameof-expression"></a>The nameof Expression</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As we <a href="#editor-api-problems">mentioned earlier</a>, we have to obtain a
+SerializedProperty by searching for a field with the name <code>"guid"</code>. If we were
+to change the name of our field (e.g. from <code>"guid"</code> to <code>"id"</code>), then we would
+need to change the argument passed to the <code>SerializedObject.FindProperty</code> method
+as well.</p>
+</div>
+<div class="paragraph">
+<p>Fortunately, we can automatically obtain the name of our <code>guid</code> field using a
+feature of C# called the
+<a href="https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/nameof"><code>nameof</code>
+expression</a>.</p>
+</div>
+<div class="paragraph">
+<p>As its name would imply, this expression allows us to obtain the name of a
+variable, type, or field as a string constant.</p>
+</div>
+<div class="sect2">
+<h3 id="script-usage-nameof"><a class="anchor" href="#script-usage-nameof"></a>Script Usage: nameof</h3>
+<div class="paragraph">
+<p>Since this feature is rather simple, let&#8217;s use just use it in our script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+</pre></td><td class="code"><pre><span class="c1">// Other using statements...</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span><span class="k">using</span> <span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="cp">#endif
+</span>
+<span class="p">[</span><span class="n">ExecuteAlways</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">CustomGUID</span> <span class="p">:</span> <span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">string</span> <span class="n">guid</span><span class="p">;</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span>    <span class="k">private</span> <span class="k">void</span> <span class="nf">Awake</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span> <span class="p">{</span>
+            <span class="c1">// For now, always assign a new GUID</span>
+
+            <span class="n">SerializedObject</span> <span class="n">serializedObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SerializedObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="n">SerializedProperty</span> <span class="n">guidProperty</span> <span class="p">=</span>
+                <span class="n">serializedObject</span><span class="p">.</span><span class="nf">FindProperty</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">guid</span><span class="p">));</span>
+
+            <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">ToString</span><span class="p">();</span>
+
+            <span class="n">serializedObject</span><span class="p">.</span><span class="nf">ApplyModifiedProperties</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span>
+    <span class="c1">// Update method not implemented...</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Compared to our <a href="#script-usage-preprocessor">previous example</a>, we&#8217;ve only
+changed one line: line 21.</p>
+</div>
+<div class="paragraph">
+<p>Specifically, we changed our argument from the strong literal <code>"guid"</code> to the
+expression <code>nameof(guid)</code>. This will have the same functionality while being
+more robust.</p>
+</div>
+<div class="paragraph">
+<p>If we were to rename the <code>guid</code> field (perhaps to <code>id</code>) in an IDE like Rider,
+then our IDE would automatically use the new name on line 20 for us. By using
+this feature, we no longer need to worry about changing the argument to
+<code>SerializedObject.FindProperty</code>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="stop-constant-change"><a class="anchor" href="#stop-constant-change"></a>Stop Constantly Changing GUIDs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Up to this point, you may have noticed a possible quirk in our implementation:
+we assign a new GUID to each GameObject every time we load a scene
+(or fully open up a prefab).</p>
+</div>
+<div class="paragraph">
+<p>There are a few annoying issues with this approach:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Whenever leaving a scene, the Unity editor will ask if we want to save, even
+if it doesn&#8217;t seem like we&#8217;ve changed anything (as the GUIDs of our
+GameObjects will have changed).</p>
+</li>
+<li>
+<p>Our commits in git will constantly show scenes and prefabs being changed, even
+if we didn&#8217;t apparently modify them (as the GUIDs of their GameObjects will
+have changed upon opening them).</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To solve these issues, we&#8217;ll use a different approach entirely: we&#8217;ll only
+modify a GameObject&#8217;s GUID as necessary. We will begin by showing how this
+approach handles the duplication of GameObjects.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="handling-duplication"><a class="anchor" href="#handling-duplication"></a>Handling Duplication</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As we mentioned <a href="#the-problem">near the beginning of this post</a>, we need to
+ensure that the GUID is different when a GameObject is duplicated.</p>
+</div>
+<div class="paragraph">
+<p>Normally, when a GameObject is duplicated, all of the fields in its attached
+scripts are duplicated as well.</p>
+</div>
+<div class="paragraph">
+<p>However, we want the <code>guid</code> field in the <code>CustomGUID</code> script of a GameObject
+to <strong>not</strong> be duplicated (as this stores our GameObject&#8217;s GUID). How can we
+achieve this?</p>
+</div>
+<div class="paragraph">
+<p>Ideally, we would want to run code to generate a new GUID whenever the
+GameObject is duplicated. Unfortunately, Unity doesn&#8217;t provide any direct ways
+to achieve this.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://answers.unity.com/questions/483434/how-to-call-a-method-when-a-gameobject-has-been-du.html">This
+forum post</a> seems to describe an indirect way to do this, but the approach shown
+there will also run code when a scene is first entered, so it&#8217;s not viable for
+our use case. (If we generated a new GUID whenever we entered a scene, then our
+GameObjects would change GUIDs constantly, leaving us with the annoying issues
+<a href="#stop-constant-change">from earlier</a>.)</p>
+</div>
+<div class="sect2">
+<h3 id="script-usage-handling-duplication"><a class="anchor" href="#script-usage-handling-duplication"></a>Script Usage: Handling Duplication</h3>
+<div class="paragraph">
+<p>Since we can&#8217;t run code specifically when a GameObject is being duplicated,
+we&#8217;ll simply have each <code>CustomGUID</code> script check the other GUIDs to see if our
+current GUID is a duplicate:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+</pre></td><td class="code"><pre><span class="c1">// Just the Awake method is shown here</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span>    <span class="k">private</span> <span class="k">void</span> <span class="nf">Awake</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">SerializedObject</span> <span class="n">serializedObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SerializedObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="n">SerializedProperty</span> <span class="n">guidProperty</span> <span class="p">=</span>
+                <span class="n">serializedObject</span><span class="p">.</span><span class="nf">FindProperty</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">guid</span><span class="p">));</span>
+
+            <span class="c1">// Potential performance problem, but fine for dozens of GameObjects</span>
+            <span class="n">CustomGUID</span><span class="p">[]</span> <span class="n">customGuids</span> <span class="p">=</span> <span class="n">FindObjectsOfType</span><span class="p">&lt;</span><span class="n">CustomGUID</span><span class="p">&gt;();</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="n">CustomGUID</span> <span class="n">customGuid</span> <span class="k">in</span> <span class="n">customGuids</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">customGuid</span><span class="p">.</span><span class="n">guid</span> <span class="p">==</span> <span class="n">guid</span> <span class="p">&amp;&amp;</span> <span class="n">customGuid</span> <span class="p">!=</span> <span class="k">this</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="nf">NewGuid</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="n">serializedObject</span><span class="p">.</span><span class="nf">ApplyModifiedProperties</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span></pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Though this approach will correctly prevent duplicate GameObjects from having
+the same GUIDs, it has a potential performance problem. Since each <code>CustomGUID</code>
+will have to check all of our <code>CustomGUID</code> scripts, this section of code will
+have a run time of O(n<sup>2</sup>), which will be abysmal with large numbers of
+<code>CustomGUID</code> scripts (i.e. large numbers of GameObjects with <code>CustomGUID</code>
+scripts attached).</p>
+</div>
+<div class="paragraph">
+<p>Perhaps due to the speed of modern computers (and the fact that this code is in
+<code>Awake</code> rather than <code>Update</code>), this performance is fine when you have dozens and
+dozens of GameObjects in your scene. However, as you approach hundreds of
+GameObjects, the performance problems become significantly worse, at least on
+the gaming laptop I used for testing.</p>
+</div>
+<div class="paragraph">
+<p>To solve this performance problem, you can cache the GUIDs that have been used
+so far. Using a Dictionary or a
+<a href="https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1?view=net-7.0">HashSet</a>
+in a static variable for this cache will allow you to achieve rapid look-ups and
+avoid redundant insertions.</p>
+</div>
+<div class="paragraph">
+<p>I won&#8217;t go into too much detail regarding this optimization, as this post is
+primarily focused on the core techniques and features I used to set up
+persistent GUIDs in Unity. The underlying approach is the same regardless of
+whether or not you cache currently-used GUIDs, and the code shown here is
+optimized enough for use as an explanatory example.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="handling-new-gameobjects"><a class="anchor" href="#handling-new-gameobjects"></a>Handling New GameObjects</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When first attaching a <code>CustomGUID</code> script to a GameObject, we (perhaps
+obviously) need to give it a GUID.</p>
+</div>
+<div class="paragraph">
+<p>To avoid having a new GUID every time we load the scene, we&#8217;ll use <code>null</code> as the
+default value for our <code>guid</code> field (<code>null</code> is already the default value for a
+string field) and then initialize <code>guid</code> if it has not been initialized before:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="code"><pre><span class="c1">// Inside the CustomGUID class</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span>    <span class="k">private</span> <span class="k">void</span> <span class="nf">Update</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">SerializedObject</span> <span class="n">serializedObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SerializedObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="n">SerializedProperty</span> <span class="n">guidProperty</span> <span class="p">=</span>
+                <span class="n">serializedObject</span><span class="p">.</span><span class="nf">FindProperty</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">guid</span><span class="p">));</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="nf">NewGuid</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="n">serializedObject</span><span class="p">.</span><span class="nf">ApplyModifiedProperties</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span></pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Additionally, since we&#8217;re now generating GUIDs in more than one place, let&#8217;s
+refactor that GUID-generation code into its own little method:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td><td class="code"><pre>    <span class="c1">// Inside the CustomGUID class</span>
+
+    <span class="k">private</span> <span class="kt">string</span> <span class="nf">NewGuid</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">ToString</span><span class="p">();</span>
+    <span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It&#8217;s fine for us to place this code in Update, since checking the GUID every
+time something in the scene changes is cheap&#8212;&#8203;cheap enough to be negligible.</p>
+</div>
+<div class="paragraph">
+<p>In the <code>Update</code> method, we reuse many of the same features we saw before: Editor
+APIs (<code>SerializedObject</code> and <code>SerializedProperty</code>), the <code>nameof</code> expression, and
+functionality related to <code>ExecuteAttribute</code> (<code>Application.IsPlaying</code>). Since
+we&#8217;re familiar with these features already, our functionality is fairly
+straightforward.</p>
+</div>
+<div class="paragraph">
+<p>The only particularly new detail is the use of <code>String.IsNullOrEmpty</code>. This is
+just a little utility function from
+<a href="https://learn.microsoft.com/en-us/dotnet/api/system.string.isnullorempty?view=net-7.0">C#'s
+standard library</a> which checks if a string is <code>null</code> or empty.</p>
+</div>
+<div class="paragraph">
+<p>Checking for an empty string is useful for debugging purposes, as it allows us
+to force new GUIDs to be generated from the editor. Simply by clearing the
+<code>guid</code> field from the Inspector window, we can force this script to generate a
+new GUID. This benefit is also only possible in the <code>Update</code> method. If we were
+to check for <code>null</code> or empty in the <code>Awake</code> method, then we wouldn&#8217;t see an
+instant response, as we would have to wait until the <code>Awake</code> method is next
+called (probably the next time we leave and re-open the scene).</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="handling-prefab-instances"><a class="anchor" href="#handling-prefab-instances"></a>Handling Prefab Instances</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We want to ensure that the GUID of our prefab is different from the GUID of any
+of its instances.</p>
+</div>
+<div class="paragraph">
+<p>Fortunately, the Editor APIs provide a fairly straightforward way to accomplish
+this:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>SerializedProperty.isInstantiatedPrefab</code> property tells us if our
+property is part of a script which is attached to a prefab instance.</p>
+</li>
+<li>
+<p>The <code>SerializedProperty.prefabOverride</code> property tells us if the property has
+been modified from the property&#8217;s value in its parent prefab (assuming that
+the property is attached to a prefab instance).</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="script-usage-isinstantiatedprefab-and-prefaboverride"><a class="anchor" href="#script-usage-isinstantiatedprefab-and-prefaboverride"></a>Script Usage: isInstantiatedPrefab and prefabOverride</h3>
+<div class="paragraph">
+<p>Let&#8217;s use these 2 properties to check if the GUID of a prefab instance is the
+same as the GUID of its prefab:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+</pre></td><td class="code"><pre><span class="c1">// Inside the CustomGUID class</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span>    <span class="k">private</span> <span class="k">void</span> <span class="nf">Update</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">SerializedObject</span> <span class="n">serializedObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SerializedObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="n">SerializedProperty</span> <span class="n">guidProperty</span> <span class="p">=</span>
+                <span class="n">serializedObject</span><span class="p">.</span><span class="nf">FindProperty</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">guid</span><span class="p">));</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span><span class="p">)</span> <span class="p">||</span>
+                <span class="p">(</span><span class="n">guidProperty</span><span class="p">.</span><span class="n">isInstantiatedPrefab</span> <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">guidProperty</span><span class="p">.</span><span class="n">prefabOverride</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="nf">NewGuid</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="n">serializedObject</span><span class="p">.</span><span class="nf">ApplyModifiedProperties</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span></pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Our changes can be seen on line 14, with the addition of new conditions to our
+<code>if</code> statement.</p>
+</div>
+<div class="paragraph">
+<p>By checking the negation of <code>guidProperty.prefabOverride</code> specifically, we can
+check if the <code>guid</code> field in our prefab instance is the same as in our original
+prefab asset.</p>
+</div>
+<div class="paragraph">
+<p>Using this fact, this code directly checks if our script is part of a prefab
+instance and if our <code>guid</code> field is the same as the original prefab asset. If
+so, it generates and assigns a new GUID.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="handling-prefabs-editorapis"><a class="anchor" href="#handling-prefabs-editorapis"></a>Handling Prefabs (EditorAPIs)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Ideally, we want the GUID of a prefab itself to be null, to prevent us from
+saving/loading information for a prefab when we mean to be saving/loading
+information for its instances.</p>
+</div>
+<div class="paragraph">
+<p>That is, if we ever accidentally access the GUID of a prefab (while intending to
+access the GUID of one of its instances), we want a glaring <code>null</code> value to show
+us that we&#8217;re doing something wrong.</p>
+</div>
+<div class="paragraph">
+<p>Ideally, we would want to execute some code whenever we create a new prefab.
+Unfortunately, as far as I can tell, Unity does not offer any way for us to do
+this.</p>
+</div>
+<div class="paragraph">
+<p>As a result, I&#8217;ve adopted this approach: set the <code>guid</code> field for a CustomGUID
+script to <code>null</code> as soon as we&#8217;ve detected that it&#8217;s attached to a prefab asset.</p>
+</div>
+<div id="two-prefab-cases" class="paragraph">
+<p>There are two places in the Unity editor where we might modify a prefab:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>While we have a scene open, and we are only previewing the prefab (viewing
+the prefab solely in the inspector).</p>
+</li>
+<li>
+<p>When we have the prefab opened fully, in its own special scene which exists
+just to edit that prefab.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>To detect whether or not a <code>CustomGUID</code> script (or any other script) is attached
+to a prefab asset, we have to detect both of these cases.</p>
+</div>
+<div class="sect2">
+<h3 id="prefabstage-and-prefabstageutility"><a class="anchor" href="#prefabstage-and-prefabstageutility"></a>PrefabStage and PrefabStageUtility</h3>
+<div class="paragraph">
+<p>Despite my best efforts, I was only able to detect the second case, when we have
+the prefab fully opened in its own special scene.</p>
+</div>
+<div class="paragraph">
+<p>To accomplish this, I used the <code>PrefabStage</code> and <code>PrefabStageUtility</code> classes,
+which are part of the editor API.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A <code>PrefabStage</code> represents a special, prefab-specific scene that allows us to
+edit all of the scenes of a prefab. In the editor, we normally reach this
+scene by double-clicking on a prefab.</p>
+</li>
+<li>
+<p><code>PrefabStageUtility</code> contains multiple utility methods, one of which allows us
+to check if we&#8217;re currently in a special prefab scene.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="script-usage-prefabstage-and-prefabstageutility"><a class="anchor" href="#script-usage-prefabstage-and-prefabstageutility"></a>Script Usage: PrefabStage and PrefabStageUtility</h3>
+<div class="paragraph">
+<p>Let&#8217;s create a method which will check if our script is attached to a Prefab
+asset (while in a special prefab scene):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+</pre></td><td class="code"><pre><span class="c1">// Inside the CustomGUID class</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span>    <span class="k">private</span> <span class="kt">bool</span> <span class="nf">IsPrefab</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">PrefabStage</span> <span class="n">currPrefabStage</span> <span class="p">=</span> <span class="n">PrefabStageUtility</span><span class="p">.</span><span class="nf">GetCurrentPrefabStage</span><span class="p">();</span>
+
+        <span class="k">return</span> <span class="n">currPrefabStage</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span>
+               <span class="n">currPrefabStage</span><span class="p">.</span><span class="nf">IsPartOfPrefabContents</span><span class="p">(</span><span class="n">gameObject</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span></pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>These new Editor APIs are located in the <code>UnityEditor.SceneManagement</code>
+namespace, so we&#8217;ll need to add a new conditionally-compiled <code>using</code> statement:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="code"><pre><span class="cp">#if UNITY_EDITOR
+</span><span class="k">using</span> <span class="nn">UnityEditor</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">UnityEditor.SceneManagement</span><span class="p">;</span>
+<span class="cp">#endif UNITY_EDITOR
+</span></pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, let&#8217;s use this <code>IsPrefab</code> method in our <code>Update</code> method:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="csharp"><table class="linenotable"><tbody><tr><td class="linenos gl"><pre class="lineno"> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+</pre></td><td class="code"><pre><span class="c1">// Inside the CustomGUID class</span>
+
+<span class="cp">#if UNITY_EDITOR
+</span>    <span class="k">private</span> <span class="k">void</span> <span class="nf">Update</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(!</span><span class="n">Application</span><span class="p">.</span><span class="nf">IsPlaying</span><span class="p">(</span><span class="n">gameObject</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">SerializedObject</span> <span class="n">serializedObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SerializedObject</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="n">SerializedProperty</span> <span class="n">guidProperty</span> <span class="p">=</span>
+                <span class="n">serializedObject</span><span class="p">.</span><span class="nf">FindProperty</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">guid</span><span class="p">));</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="nf">IsPrefab</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span><span class="p">)</span> <span class="p">||</span>
+                     <span class="p">(</span><span class="n">guidProperty</span><span class="p">.</span><span class="n">isInstantiatedPrefab</span> <span class="p">&amp;&amp;!</span><span class="n">guidProperty</span><span class="p">.</span><span class="n">prefabOverride</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">guidProperty</span><span class="p">.</span><span class="n">stringValue</span> <span class="p">=</span> <span class="nf">NewGuid</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="n">serializedObject</span><span class="p">.</span><span class="nf">ApplyModifiedProperties</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="cp">#endif
+</span></pre></td></tr></tbody></table></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The major changes here come on lines 13-16, where we check if we&#8217;re in a full
+prefab scene and set the GUID to <code>null</code> accordingly.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s important that line 17 be an <code>else if</code> rather than another <code>if</code> statement,
+otherwise we&#8217;ll end up generating a new GUID immediately after setting our field
+to <code>null</code>.</p>
+</div>
+<div class="paragraph">
+<p>Now, whenever we fully open a prefab in the Unity editor, its GUID will be
+automatically set to <code>null</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="what-about-prefab-previews"><a class="anchor" href="#what-about-prefab-previews"></a>What About Prefab Previews?</h3>
+<div class="paragraph">
+<p>As I alluded to earlier, I never managed to detect the first prefab case (which
+is when we have a normal scene open in the editor and a prefab previewed in the
+Inspector window).</p>
+</div>
+<div class="paragraph">
+<p>Though this is not ideal, it&#8217;s still acceptable, and the script is still usable.
+Even if we never open a prefab fully and the prefab continues to have a
+non-<code>null</code> GUID, our changes from the <a href="#handling-prefab-instances">Handling Prefab Instances</a> section will
+prevent us from facing any bugs outright.</p>
+</div>
+<div class="paragraph">
+<p>In the future, as I continue to use this script, I may discover how to handle
+this case.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="full-script"><a class="anchor" href="#full-script"></a>Full Script</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://github.com/Superchig/CustomGuidExample/blob/main/Assets/Scripts/CustomGUID.cs">Download
+here</a> for the full script.</p>
+</div>
+<div class="paragraph">
+<p>Hopefully, this post helps you understand how this script operates, in case you
+ever want to modify it.</p>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<hr>
+<div class="footnote" id="_footnotedef_1">
+<a href="#_footnoteref_1">1</a>. These are called preprocessor directives because they are heavily inspired by a similar mechanism associated with the C programming language. When programming with C, the preprocessor performs "dumb" textual manipulation of the source code before the compiler actually parses and compiles anything into machine code. Traditionally, the preprocessor was a separate program entirely, being invoked by the compiler before anything else was done. <br> <br> In C#, the compiler doesn&#8217;t use a separate preprocessor, but it does process each of these directives as if there were a separate program running before the rest of the compiler.
+</div>
+</div>
+</article>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      <a href="https://github.com/Superchig/superchig.github.io/edit/main/_posts/2022-11-30-custom-guid/index.adoc">
+        <i class="fa fa-edit"></i> fix typo
+      </a>
+
+      <a href=" /feed.xml">
+        <i class="fa fa-rss"></i> rss
+      </a>
+
+      <a href="https://github.com/Superchig">
+        <i class="fa fa-github"></i> superchig
+      </a>
+    </p>
+  </footer>
+</body>
+
+</html>

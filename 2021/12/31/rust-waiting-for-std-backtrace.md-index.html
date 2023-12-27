@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Rust: waiting for std::backtrace to be stabilized</title>
+  <meta name="description"
+    content="Every so often, I&#8217;ve worked on a terminal file manager calledrolf. Modeled after the excellentlf file manager, this (woefullyincomplete) project exists...">
+  <link rel="canonical" href="https://superchig.com/2021/12/31/rust-waiting-for-std-backtrace.md-">
+  <link rel="alternate" type="application/rss+xml" title="superchig" href="https://superchig.com/feed.xml">
+
+  <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Regular.woff2') format('woff2');
+    }
+
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/css/JetBrainsMono-Bold.woff2') format('woff2');
+      ;
+      font-weight: bold;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      margin-block-start: 0;
+      margin-block-end: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-weight: 300;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 80ch;
+      padding-left: 2ch;
+      padding-right: 2ch;
+    }
+
+    .site-header {
+      width: 100%;
+      max-width: 80ch;
+    }
+
+    .site-header>nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .site-header .-title {
+      flex-grow: 2;
+    }
+
+    .site-footer {
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      width: 100%;
+      max-width: 80ch;
+      margin-top: 1rem;
+      height: 2rem;
+      padding-left: 1ch;
+      padding-right: 1ch;
+    }
+  </style>
+  <link rel="stylesheet" href=" /css/adoc.css">
+  <link rel="stylesheet" href=" /css/rouge-github.css">
+  <link rel="stylesheet" href=" /css/main.css">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400italic,700,700italic%7COpen+Sans:300">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <nav>
+      <a class="-title" href="/">superchig</a>
+      
+      
+      <a href="/about/">About</a>
+      
+      
+      
+      
+      
+      <a href="/opt-in-workflow-image-not-really/">Twilio</a>
+      
+      
+      
+      
+      
+      
+      <a href="/portfolio">Portfolio</a>
+    </nav>
+  </header>
+
+  <main>
+    <article>
+  <h1>Rust: waiting for std::backtrace to be stabilized</h1>
+  <div class="post-meta sect1">Dec 31, 2021</div>
+  <div class="paragraph">
+<p>Every so often, I&#8217;ve worked on a terminal file manager called
+<a href="https://github.com/Superchig/rolf"><code>rolf</code></a>. Modeled after the excellent
+<a href="https://github.com/gokcehan/lf">lf</a> file manager, this (woefully
+incomplete) project exists primarily to help me learn the Rust
+programming language.</p>
+</div>
+<div class="paragraph">
+<p>When it comes to error handling, I&#8217;d love to use the
+<a href="https://github.com/dtolnay/anyhow">anyhow library</a> to help me concisely
+handle multiple different error types. However, support for backtraces
+is dependent on the <code>std::backtrace</code> module, which is currently only
+available in <a href="https://github.com/rust-lang/rust/issues/53487">Rust
+nightly</a>. Since I only occasionally work on <code>rolf</code>, building it with
+later versions of Rust (with minimal-to-no changes) is a goal of mine.
+As a result, Rust nightly is off the table for my purposes.</p>
+</div>
+<div class="paragraph">
+<p>When errors occur, I find backtraces invaluable. Since <code>std::backtrace</code>
+is locked behind nightly, it seems like using anyhow for error
+propagation will actually make it more difficult for me to access them.
+Instead, I&#8217;ve been making liberal use of <code>unwrap()</code> (even when I&#8217;m aware
+that a function call may legitimately fail), which gives me stack
+traces. Of course, this comes at the cost of crashing the program on
+these errors.</p>
+</div>
+<div class="paragraph">
+<p>Is this bad programming practice? Quite possibly. Certainly, no one
+should use <code>rolf</code> for anything vital. To develop the project to a
+certain level of maturity, I would need to inspect my uses of <code>unwrap()</code>
+by hand and properly handle legitimate errors. However, I may never get
+to that, and so crashing on errors is acceptable to me.</p>
+</div>
+</article>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      <a href="https://github.com/Superchig/superchig.github.io/edit/main/_posts/2021-12-31-rust-waiting-for-std-backtrace.md/index.adoc">
+        <i class="fa fa-edit"></i> fix typo
+      </a>
+
+      <a href=" /feed.xml">
+        <i class="fa fa-rss"></i> rss
+      </a>
+
+      <a href="https://github.com/Superchig">
+        <i class="fa fa-github"></i> superchig
+      </a>
+    </p>
+  </footer>
+</body>
+
+</html>
